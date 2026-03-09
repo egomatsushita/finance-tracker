@@ -12,4 +12,4 @@ def read_root() -> dict:
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=settings.UVICORN_HOST, port=settings.UVICORN_PORT, reload=True)
+    uvicorn.run("main:app", host=settings.uvicorn_host, port=settings.uvicorn_port, reload=True)
