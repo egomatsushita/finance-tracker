@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
+
+from schemas.base import Base
 
 
-class UserBase(BaseModel):
+class UserBase(Base):
     username: str
     email: EmailStr
     disabled: bool = False
@@ -18,10 +20,17 @@ class UserCreateSchema(UserBase):
     password: str
 
 
-class UserUpdateSchema(BaseModel):
+class UserUpdateBaseSchema(Base):
     username: str | None = None
     email: EmailStr | None = None
     disabled: bool | None = None
+
+
+class UserUpdateHashSchema(UserUpdateBaseSchema):
+    hashed_password: str | None = None
+
+
+class UserUpdateSchema(UserUpdateBaseSchema):
     password: str | None = None
 
 

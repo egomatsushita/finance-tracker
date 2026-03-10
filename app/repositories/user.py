@@ -4,8 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.user import User
-from schemas.user import UserCreateHashSchema, UserUpdateSchema
-from services.auth import hash_password
+from schemas.user import UserCreateHashSchema, UserUpdateHashSchema
 
 
 class UserRepository:
@@ -32,7 +31,7 @@ class UserRepository:
         await self.session.flush()
         return user
 
-    async def update(self, user_id: UUID, user_data: UserUpdateSchema) -> User | None:
+    async def update(self, user_id: UUID, user_data: UserUpdateHashSchema) -> User | None:
         user = await self.get_by_id(user_id)
 
         if user is None:
@@ -40,10 +39,7 @@ class UserRepository:
 
         filtered_user_data = user_data.model_dump(exclude_unset=True)
         for name, value in filtered_user_data.items():
-            if name == "password":
-                setattr(user, "hashed_password", hash_password(value))
-            else:
-                setattr(user, name, value)
+            setattr(user, name, value)
         return user
 
     async def delete(self, user_id: UUID) -> bool:
