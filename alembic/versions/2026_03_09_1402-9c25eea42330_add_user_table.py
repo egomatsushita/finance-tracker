@@ -6,6 +6,7 @@ Create Date: 2026-03-09 14:02:04.694073
 
 """
 
+from uuid import uuid4
 from datetime import datetime as dt
 from typing import Sequence, Union
 
@@ -24,12 +25,12 @@ def upgrade() -> None:
     op.create_table(
         "user",
         sa.Column("id", sa.UUID, primary_key=True),
-        sa.Column("username", sa.String(64), nullable=False),
-        sa.Column("email", sa.String(128), nullable=False),
-        sa.Column("hashed_password", sa.String(254), nullable=False),
-        sa.Column("disabled", sa.Boolean(), nullable=False),
-        sa.Column("created", sa.DateTime(), default=dt.now, nullable=False),
-        sa.Column("modified", sa.DateTime(), default=dt.now, nullable=False),
+        sa.Column("username", sa.String(64), nullable=False, unique=True),
+        sa.Column("email", sa.String(256), nullable=False, unique=True),
+        sa.Column("hashed_password", sa.String(256), nullable=False),
+        sa.Column("disabled", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column("created", sa.DateTime(), server_default=sa.func.now(), nullable=False),
+        sa.Column("modified", sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
     )
 
 
