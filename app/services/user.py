@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user import UserRepository
+from sqlalchemy.exc import IntegrityError
 from schemas.user import UserReadSchema, UserCreateHashSchema, UserUpdateSchema, UserUpdateHashSchema, UserCreateSchema
 from schemas.params import FilterParams
 from services.auth import hash_password
@@ -36,20 +37,30 @@ class UserService:
 
     async def create(self, user_data: UserCreateSchema) -> UserReadSchema:
         new_user_data = UserCreateHashSchema(
-            **user_data.model_dump(exclude={"password"}), hashed_password=hash_password(user_data.password)
+            **user_data.model_dump(exclude={"password"}),
+            hashed_password=hash_password(user_data.password),
         )
-        new_user = await self.repo.create(new_user_data)
+
+        try:
+            new_user = await self.repo.create(new_user_data)
+        except IntegrityError:
+            raise HTTPException(status_code=409, detail="Username or email already exist.")
+
         return UserReadSchema.model_validate(new_user)
 
     async def update(self, user_id: UUID, user_data: UserUpdateSchema) -> UserReadSchema:
         if user_data.password is not None:
             data = UserUpdateHashSchema(
-                **user_data.model_dump(exclude={"password"}), hashed_password=hash_password(user_data.password)
+                **user_data.model_dump(exclude={"password"}, exclude_unset=True),
+                hashed_password=hash_password(user_data.password),
             )
         else:
-            data = UserUpdateHashSchema(**user_data.model_dump())
+            data = UserUpdateHashSchema(**user_data.model_dump(exclude_unset=True))
 
-        updated_user = await self.repo.update(user_id, data)
+        try:
+            updated_user = await self.repo.update(user_id, data)
+        except IntegrityError:
+            raise HTTPException(status_code=409, detail="Username or email already exist.")
 
         if updated_user is None:
             raise HTTPException(status_code=404, detail="User not found")
