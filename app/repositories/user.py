@@ -1,9 +1,10 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.user import User
+from schemas.params import FilterParams
 from schemas.user import UserCreateHashSchema, UserUpdateHashSchema
 
 
@@ -11,8 +12,10 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_all(self, offset: int = 0, limit: int = 10) -> list[User]:
-        resp = await self.session.execute(select(User).offset(offset).limit(limit))
+    async def get_all(self, filter_params: FilterParams) -> list[User]:
+        resp = await self.session.execute(
+            select(User).offset(filter_params.offset).limit(filter_params.limit).order_by(text(filter_params.order_by))
+        )
         users = resp.scalars().all()
         return users
 

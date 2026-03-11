@@ -1,14 +1,11 @@
 from fastapi import FastAPI
 import uvicorn
 
-from config import settings
+from config.settings import settings
+from routers.user import user_router
 
-app = FastAPI()
-
-
-@app.get("/")
-def read_root() -> dict:
-    return {"message": "Hello from finance-tracker!"}
+app = FastAPI(title="Personal Finance Tracker")
+app.include_router(user_router)
 
 
 if __name__ == "__main__":
