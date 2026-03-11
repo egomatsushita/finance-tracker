@@ -36,5 +36,5 @@ class UserUpdateSchema(UserUpdateBaseSchema):
 
 class UserReadSchema(UserBase):
     id: UUID
-    created: datetime
-    modified: datetime
+    created_at: datetime
+    updated_at: datetime
