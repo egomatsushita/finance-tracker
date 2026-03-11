@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ async def get_async_session():
             await session.commit()
         except IntegrityError:
             await session.rollback()
-            raise
+            raise HTTPException(status_code=500, detail="Something went wrong on our end. Please try again shortly.")
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
