@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user import UserRepository
 from schemas.user import UserReadSchema, UserCreateHashSchema, UserUpdateSchema, UserUpdateHashSchema, UserCreateSchema
+from schemas.params import FilterParams
 from services.auth import hash_password
 
 
@@ -13,8 +14,8 @@ class UserService:
         self.session = session
         self.repo = UserRepository(session)
 
-    async def get_all(self, offset: int = 0, limit: int = 10) -> list[UserReadSchema]:
-        users = await self.repo.get_all(offset=offset, limit=limit)
+    async def get_all(self, filter_params: FilterParams) -> list[UserReadSchema]:
+        users = await self.repo.get_all(filter_params)
         return [UserReadSchema.model_validate(user) for user in users]
 
     async def get_by_id(self, user_id: UUID) -> UserReadSchema:
@@ -55,8 +56,7 @@ class UserService:
 
         return UserReadSchema.model_validate(updated_user)
 
-    async def delete(self, user_id: UUID) -> dict:
-        resp = await self.repo.delete(user_id)
-        if not resp:
+    async def delete(self, user_id: UUID) -> None:
+        success = await self.repo.delete(user_id)
+        if not success:
             raise HTTPException(status_code=404, detail="User not found")
-        return {"success": True}
