@@ -1,14 +1,14 @@
 user_create_example = {
     "username": "john-doe",
     "email": "john@example.com",
-    "disabled": False,
+    "is_active": True,
     "password": "secureP@ssword123",
 }
 
 user_update_example = {
     "username": "john-doe-updated",
     "email": "john.updated@example.com",
-    "disabled": False,
+    "is_active": True,
 }
 
 user_endpoints = {
@@ -26,7 +26,7 @@ user_endpoints = {
             Create a new user with the following information: </br></br>
             - **username**: must be unique </br>
             - **email**: must be a valid and unique email address </br>
-            - **disabled**: indicates whether the account is active </br>
+            - **is_active**: indicates whether the account is active </br>
             - **password**: use a strong password with letters, numbers, and special characters
         """,
     },

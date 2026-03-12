@@ -9,7 +9,7 @@ from schemas.base import Base
 class UserBase(Base):
     username: str
     email: EmailStr
-    disabled: bool = False
+    is_active: bool = True
 
 
 class UserCreateHashSchema(UserBase):
@@ -23,7 +23,7 @@ class UserCreateSchema(UserBase):
 class UserUpdateBaseSchema(Base):
     username: str | None = None
     email: EmailStr | None = None
-    disabled: bool | None = None
+    is_active: bool | None = None
 
 
 class UserUpdateHashSchema(UserUpdateBaseSchema):
