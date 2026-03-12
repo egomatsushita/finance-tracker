@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr
 
 from schemas.base import Base
 
@@ -21,7 +21,7 @@ class UserBase(Base):
     username: str
     email: EmailStr
     is_active: bool = True
-    role: UserRoleEnum = "user"
+    role: UserRoleEnum = UserRoleEnum.user
 
 
 class UserCreateHashSchema(UserBase):
