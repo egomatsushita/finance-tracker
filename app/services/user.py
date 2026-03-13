@@ -5,9 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user import UserRepository
 from sqlalchemy.exc import IntegrityError
-from schemas.user import UserReadSchema, UserCreateHashSchema, UserUpdateSchema, UserUpdateHashSchema, UserCreateSchema
+from schemas.user import (
+    UserReadSchema,
+    UserCreateHashSchema,
+    UserUpdateSchema,
+    UserUpdateHashSchema,
+    UserCreateSchema,
+)
 from schemas.params import FilterParams
-from services.auth import hash_password
+from services.auth import AuthService
 
 
 class UserService:
@@ -38,7 +44,7 @@ class UserService:
     async def create(self, user_data: UserCreateSchema) -> UserReadSchema:
         new_user_data = UserCreateHashSchema(
             **user_data.model_dump(exclude={"password"}),
-            hashed_password=hash_password(user_data.password),
+            hashed_password=AuthService.create_hashed_password(user_data.password),
         )
 
         try:
@@ -52,7 +58,7 @@ class UserService:
         if user_data.password is not None:
             data = UserUpdateHashSchema(
                 **user_data.model_dump(exclude={"password"}, exclude_unset=True),
-                hashed_password=hash_password(user_data.password),
+                hashed_password=AuthService.create_hashed_password(user_data.password),
             )
         else:
             data = UserUpdateHashSchema(**user_data.model_dump(exclude_unset=True))
