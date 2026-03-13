@@ -1,8 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends
 
+from dependencies.auth import verify_token
 from dependencies.params import FilterParamsDep
 from dependencies.service import get_service_dep
 from docs.user import user_create_example, user_update_example, user_endpoints
@@ -12,7 +13,7 @@ from schemas.user import UserReadSchema, UserCreateSchema, UserUpdateSchema
 
 ServiceDep = Annotated[UserService, get_service_dep(UserService)]
 
-user_router = APIRouter(prefix="/users", tags=["users"])
+user_router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(verify_token)])
 
 
 @user_router.get("/", status_code=200, **user_endpoints["get_all"])
