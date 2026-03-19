@@ -1,4 +1,3 @@
-from datetime import datetime as dt
 from uuid import uuid4
 
 from sqlalchemy import func
@@ -9,6 +8,7 @@ from models.base import Base
 
 
 class User(Base):
+    """Represents a user account in the system."""
     __tablename__ = "user"
 
     id = mapped_column(UUID, primary_key=True, default=uuid4)

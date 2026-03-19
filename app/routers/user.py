@@ -19,7 +19,14 @@ user_router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(v
 @user_router.get("/", status_code=200, **user_endpoints["get_all"])
 async def read_users(service: ServiceDep, filter_params: FilterParamsDep) -> list[UserReadSchema]:
     """
-    Get all the users
+    Retrieve a paginated list of all users.
+
+    Supports filtering via query parameters:
+    - **offset**: number of records to skip (default: 0)
+    - **limit**: number of records to return (default: 10, max: 100)
+    - **order_by**: sort field -- `created_at` or `updated_at` (default: `created_at`)
+
+    Returns a list of users with their id, username, email, role, active status and timestamps.
     """
     users = await service.get_all(filter_params)
     return users
@@ -30,6 +37,18 @@ async def create_user(
     service: ServiceDep,
     user_data: Annotated[UserCreateSchema, Body(examples=[user_create_example])],
 ) -> UserReadSchema:
+    """
+    Create a new user.
+
+    **Request body:**
+    - **username**: unique display name
+    - **email**: unique email address
+    - **password**: plain-text password (will be hashed before storage)
+    - **role** *(optional)*: `admin` or `user` (default: `user`)
+    - **is_active** *(optional)*: account active status (default: `true`)
+
+    Returns the created user with generated `id` and timestamps.
+    """
     user = await service.create(user_data)
     return user
 
@@ -37,7 +56,9 @@ async def create_user(
 @user_router.get("/{user_id}", status_code=200, **user_endpoints["get_one"])
 async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     """
-    Get the user by ID
+    Retrieve a user by the given `user_id`.
+
+    Returns a user with their id, username, email, role, active status and timestamps.
     """
     user = await service.get_by_id(user_id)
     return user
@@ -48,7 +69,16 @@ async def update_user(
     user_id: UUID, data: Annotated[UserUpdateSchema, Body(examples=[user_update_example])], service: ServiceDep
 ) -> UserReadSchema:
     """
-    Update the user data
+    Update user data by the given `user_id`.
+
+    **Request body** (all fields optional):
+    - **username**: unique display name
+    - **email**: unique email address
+    - **password**: plain-text password (will be hashed before storage)
+    - **role**: `admin` or `user`
+    - **is_active**: account active status
+
+    Returns the updated user with their id, username, email, role, active status and timestamps.
     """
     user = await service.update(user_id, data)
     return user
@@ -57,6 +87,6 @@ async def update_user(
 @user_router.delete("/{user_id}", status_code=204, **user_endpoints["delete"])
 async def delete_user(user_id: UUID, service: ServiceDep) -> None:
     """
-    Delete the user by ID
+    Delete a user by the given `user_id`.
     """
     await service.delete(user_id)
