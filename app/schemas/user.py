@@ -14,14 +14,14 @@ class UserRoleEnum(str, Enum):
     """
 
     admin = "admin"
-    user = "user"
+    member = "member"
 
 
 class UserBase(Base):
     username: str
     email: EmailStr
     is_active: bool = True
-    role: UserRoleEnum = UserRoleEnum.user
+    role: UserRoleEnum = UserRoleEnum.member
 
 
 class UserCreateHashSchema(UserBase):
