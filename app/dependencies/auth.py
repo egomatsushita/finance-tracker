@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 
+from errors.auth import CredentialError
 from schemas.auth import TokenPayload
 from services.auth import AuthService
 
@@ -14,26 +15,17 @@ TokenDep = Annotated[str, Depends(oauth2_scheme)]
 
 async def verify_token(token: TokenDep) -> None:
     """
-    Verify a token retrieved from `OAuth2PasswordBearer` dependency.
-
-    Decodes the JWT and checks for the presence of `sub`.
-    If `sub` exists then user has valid credentials,
-    otherwise a 401 HTTP exception is raised.
-
+    Decode and validate a JWT, extracting the `sub` claim as a `TokenPayload`.
     Args:
-        token: The token retrieved from `OAuth2PasswordBearer` dependency
-
+        token: A raw JWT string.
     Raises:
-        HTTPException: If `sub` is missing from the decoded JWT then a 401 HTTP exception is raised.
+        CredentialError: If the token is invalid or `sub` is missing.
     """
-    credential_exception = HTTPException(
-        status_code=401, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"}
-    )
     try:
         payload = AuthService.decode_jwt(token)
         token_payload = TokenPayload.model_validate(payload)
         username = token_payload.sub
         if username is None:
-            raise credential_exception
+            raise CredentialError()
     except InvalidTokenError:
-        raise credential_exception
+        raise CredentialError()

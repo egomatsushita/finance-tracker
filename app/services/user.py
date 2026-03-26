@@ -1,10 +1,9 @@
 from uuid import UUID
 
-from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user import UserRepository
-from sqlalchemy.exc import IntegrityError
 from schemas.user import (
     UserReadSchema,
     UserCreateHashSchema,
@@ -13,6 +12,7 @@ from schemas.user import (
     UserCreateSchema,
 )
 from schemas.params import FilterParams
+from errors.user import UserNotFoundError, UserAlreadyExistError
 from services.auth import AuthService
 
 
@@ -40,12 +40,12 @@ class UserService:
         Returns:
             The matching user as a UserReadSchema instance.
         Raises:
-            HTTPException (404): if no user with the given ID exists.
+            UserNotFoundError: if no user with the given ID exists.
         """
         user = await self.repo.get_by_id(user_id)
 
         if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFoundError()
 
         return UserReadSchema.model_validate(user)
 
@@ -57,12 +57,12 @@ class UserService:
         Returns:
             The matching user as a UserReadSchema instance.
         Raises:
-            HTTPException (404): if no user with the given username exists.
+            UserNotFoundError: If no user with the given username exists.
         """
         user = await self.repo.get_by_username(username)
 
         if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFoundError()
 
         return UserReadSchema.model_validate(user)
 
@@ -74,7 +74,7 @@ class UserService:
         Returns:
             The created user as a UserReadSchema instance.
         Raises:
-            HTTPException (409): if the username or email is already taken.
+            UserAlreadyExistError: if the username or email is already taken.
         """
         new_user_data = UserCreateHashSchema(
             **user_data.model_dump(exclude={"password"}),
@@ -84,7 +84,7 @@ class UserService:
         try:
             new_user = await self.repo.create(new_user_data)
         except IntegrityError:
-            raise HTTPException(status_code=409, detail="Username or email already exist.")
+            raise UserAlreadyExistError()
 
         return UserReadSchema.model_validate(new_user)
 
@@ -98,8 +98,8 @@ class UserService:
         Returns:
             The updated user as a UserReadSchema instance.
         Raises:
-            HTTPException (404): if no user with the given ID exists.
-            HTTPException (409): if the new username or email conflicts with an existing user.
+            UserNotFoundError: if no user with the given ID exists.
+            UserAlreadyExistError: if the new username or email conflicts with an existing user.
         """
         if user_data.password is not None:
             data = UserUpdateHashSchema(
@@ -112,10 +112,10 @@ class UserService:
         try:
             updated_user = await self.repo.update(user_id, data)
         except IntegrityError:
-            raise HTTPException(status_code=409, detail="Username or email already exist.")
+            raise UserAlreadyExistError()
 
         if updated_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFoundError()
 
         return UserReadSchema.model_validate(updated_user)
 
@@ -125,8 +125,8 @@ class UserService:
         Args:
             user_id: the UUID of the user to delete.
         Raises:
-            HTTPException (404): if no user with the given ID exists.
+            UserNotFoundError: if no user with the given ID exists.
         """
         success = await self.repo.delete(user_id)
         if not success:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFoundError()
