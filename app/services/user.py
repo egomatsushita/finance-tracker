@@ -3,16 +3,16 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from errors.user import UserAlreadyExistError, UserNotFoundError
 from repositories.user import UserRepository
-from schemas.user import (
-    UserReadSchema,
-    UserCreateHashSchema,
-    UserUpdateSchema,
-    UserUpdateHashSchema,
-    UserCreateSchema,
-)
 from schemas.params import FilterParams
-from errors.user import UserNotFoundError, UserAlreadyExistError
+from schemas.user import (
+    UserCreateHashSchema,
+    UserCreateSchema,
+    UserReadSchema,
+    UserUpdateHashSchema,
+    UserUpdateSchema,
+)
 from services.auth import AuthService
 
 
@@ -88,7 +88,9 @@ class UserService:
 
         return UserReadSchema.model_validate(new_user)
 
-    async def update(self, user_id: UUID, user_data: UserUpdateSchema) -> UserReadSchema:
+    async def update(
+        self, user_id: UUID, user_data: UserUpdateSchema
+    ) -> UserReadSchema:
         """
         Update a user's data by ID. Only fields explicitly set are applied.
         If a new password is provided, it is hashed before storage.
@@ -99,7 +101,8 @@ class UserService:
             The updated user as a UserReadSchema instance.
         Raises:
             UserNotFoundError: if no user with the given ID exists.
-            UserAlreadyExistError: if the new username or email conflicts with an existing user.
+            UserAlreadyExistError: if the new username or email conflicts with an
+                                   existing user.
         """
         if user_data.password is not None:
             data = UserUpdateHashSchema(

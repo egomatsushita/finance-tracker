@@ -6,18 +6,26 @@ from fastapi import APIRouter, Body, Depends
 from dependencies.auth import verify_token
 from dependencies.params import FilterParamsDep
 from dependencies.service import get_service_dep
-from docs.user import user_create_example, user_update_example, user_endpoints
+from docs.user import user_create_example, user_endpoints, user_update_example
+from schemas.user import UserCreateSchema, UserReadSchema, UserUpdateSchema
 from services.user import UserService
-from schemas.user import UserReadSchema, UserCreateSchema, UserUpdateSchema
-
 
 ServiceDep = Annotated[UserService, get_service_dep(UserService)]
 
-user_router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(verify_token)])
+user_router = APIRouter(
+    prefix="/users", tags=["users"], dependencies=[Depends(verify_token)]
+)
 
 
-@user_router.get("/", status_code=200, **user_endpoints["get_all"], response_model=list[UserReadSchema])
-async def read_users(service: ServiceDep, filter_params: FilterParamsDep) -> list[UserReadSchema]:
+@user_router.get(
+    "/",
+    status_code=200,
+    **user_endpoints["get_all"],
+    response_model=list[UserReadSchema],
+)
+async def read_users(
+    service: ServiceDep, filter_params: FilterParamsDep
+) -> list[UserReadSchema]:
     """
     Retrieve a paginated list of all users.
 
@@ -26,13 +34,16 @@ async def read_users(service: ServiceDep, filter_params: FilterParamsDep) -> lis
     - **limit**: number of records to return (default: 10, max: 100)
     - **order_by**: sort field -- `created_at` or `updated_at` (default: `created_at`)
 
-    Returns a list of users with their id, username, email, role, active status and timestamps.
+    Returns a list of users with their id, username, email, role, active status and
+    timestamps.
     """
     users = await service.get_all(filter_params)
     return users
 
 
-@user_router.post("/", status_code=201, **user_endpoints["create"], response_model=UserReadSchema)
+@user_router.post(
+    "/", status_code=201, **user_endpoints["create"], response_model=UserReadSchema
+)
 async def create_user(
     service: ServiceDep,
     user_data: Annotated[UserCreateSchema, Body(examples=[user_create_example])],
@@ -53,7 +64,12 @@ async def create_user(
     return user
 
 
-@user_router.get("/{user_id}", status_code=200, **user_endpoints["get_one"], response_model=UserReadSchema)
+@user_router.get(
+    "/{user_id}",
+    status_code=200,
+    **user_endpoints["get_one"],
+    response_model=UserReadSchema,
+)
 async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     """
     Retrieve a user by the given `user_id`.
@@ -64,9 +80,16 @@ async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     return user
 
 
-@user_router.put("/{user_id}", status_code=200, **user_endpoints["update"], response_model=UserReadSchema)
+@user_router.put(
+    "/{user_id}",
+    status_code=200,
+    **user_endpoints["update"],
+    response_model=UserReadSchema,
+)
 async def update_user(
-    user_id: UUID, data: Annotated[UserUpdateSchema, Body(examples=[user_update_example])], service: ServiceDep
+    user_id: UUID,
+    data: Annotated[UserUpdateSchema, Body(examples=[user_update_example])],
+    service: ServiceDep,
 ) -> UserReadSchema:
     """
     Update user data by the given `user_id`.
@@ -78,7 +101,8 @@ async def update_user(
     - **role**: `admin` or `user`
     - **is_active**: account active status
 
-    Returns the updated user with their id, username, email, role, active status and timestamps.
+    Returns the updated user with their id, username, email, role, active status and
+    timestamps.
     """
     user = await service.update(user_id, data)
     return user

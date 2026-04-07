@@ -1,6 +1,6 @@
-
 class DatabaseError(Exception):
     pass
+
 
 class ConflictError(DatabaseError):
     def __init__(self):

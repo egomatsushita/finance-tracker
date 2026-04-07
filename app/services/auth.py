@@ -1,7 +1,7 @@
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from fastapi.security import OAuth2PasswordRequestForm
 import jwt
+from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,7 +68,8 @@ class AuthService:
         """
         Calculate an expiration timestamp from the current UTC time.
         Args:
-            expires_delta: a time delta to add to the current time. Defaults to 15 minutes if not provided.
+            expires_delta: a time delta to add to the current time.
+                           Defaults to 15 minutes if not provided.
         Returns:
             A datetime representing the expiration time.
         """
@@ -86,7 +87,9 @@ class AuthService:
         Returns:
             A signed JWT string
         """
-        return jwt.encode(token_payload, settings.secret_key, algorithm=settings.algorithm)
+        return jwt.encode(
+            token_payload, settings.secret_key, algorithm=settings.algorithm
+        )
 
     @staticmethod
     def decode_jwt(token: str) -> dict:
@@ -100,12 +103,15 @@ class AuthService:
         return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
     @classmethod
-    def create_access_token(cls, username: str, expires_delta: timedelta | None = None) -> str:
+    def create_access_token(
+        cls, username: str, expires_delta: timedelta | None = None
+    ) -> str:
         """
         Create a signed JWT access token for the given username.
         Args:
             username: the subject to encode in the token.
-            expires_delta: time delta for token expiry. Default to 15 minutes if not provided.
+            expires_delta: time delta for token expiry.
+                           Default to 15 minutes if not provided.
         Returns:
             A signed JWT string.
         """
@@ -117,9 +123,11 @@ class AuthService:
     def authenticate(cls, hashed_password: str | None, password: str) -> bool:
         """
         Authenticate a plain-text password against user's hashed password.
-        If `hashed_password` is `None`, a dummy hash is verified to prevent timing attacks.
+        If `hashed_password` is `None`, a dummy hash is verified to prevent timing
+        attacks.
         Args:
-            hashed_password: a stored hashed password, or None if the user does not exist.
+            hashed_password: a stored hashed password, or
+                             None if the user does not exist.
             passowrd: a plain-text password to verify.
         Returns:
             True if password matches, False otherwise.

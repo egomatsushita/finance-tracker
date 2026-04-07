@@ -27,14 +27,18 @@ class UserRepository:
         Retrieve a paginated and ordered list of all users.
 
         Args:
-            filter_params: Pagination and ordering parameters, including `offset`, `limit` and `order_by`.
+            filter_params: Pagination and ordering parameters, including `offset`,
+                           `limit` and `order_by`.
 
         Returns:
             A list of `User` instances matching the given filter parameters.
             Returns an empty list if no users are found.
         """
         resp = await self.session.execute(
-            select(User).offset(filter_params.offset).limit(filter_params.limit).order_by(text(filter_params.order_by))
+            select(User)
+            .offset(filter_params.offset)
+            .limit(filter_params.limit)
+            .order_by(text(filter_params.order_by))
         )
         users = resp.scalars().all()
         return users
@@ -72,16 +76,19 @@ class UserRepository:
 
         Args:
             user_data: Validated fields required to create a `User` instance.
-        
+
         Returns:
-            A newly created `User` instance with database-generated fields populated (e.g. `id`, `created_at`).
+            A newly created `User` instance with database-generated fields populated
+            (e.g. `id`, `created_at`).
         """
         user = User(**user_data.model_dump())
         self.session.add(user)
         await self.session.flush()
         return user
 
-    async def update(self, user_id: UUID, user_data: UserUpdateHashSchema) -> User | None:
+    async def update(
+        self, user_id: UUID, user_data: UserUpdateHashSchema
+    ) -> User | None:
         """
         Update a user by the given ID.
 
