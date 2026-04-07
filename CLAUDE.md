@@ -49,4 +49,4 @@ The app follows a strict **Router → Service → Repository** layered pattern. 
 
 - Use minimal project dependencies where possible.
 - Use `git switch -c` to create new branches, not `git checkout`.
-- Never raise `HTTPException` in repositories — only in services.
+- Never raise `HTTPException` in services or repositories. Instead, raise domain exceptions from `app/errors/`. These are mapped to HTTP responses in `exception_handlers.py`.
