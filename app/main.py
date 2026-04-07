@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 import uvicorn
 
+from exception_handlers import register_exception_handlers
 from config.settings import settings
 from routers.auth import auth_router
 from routers.user import user_router
 
 app = FastAPI(title="Personal Finance Tracker")
+
+register_exception_handlers(app)
 app.include_router(auth_router)
 app.include_router(user_router)
 

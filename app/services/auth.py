@@ -1,12 +1,12 @@
 from datetime import timedelta, datetime, timezone
 
-from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 import jwt
 from pwdlib import PasswordHash
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.settings import settings
+from errors.auth import NotAuthenticatedError
 from repositories.user import UserRepository
 from schemas.auth import Token, TokenPayload
 
@@ -19,13 +19,13 @@ class AuthService:
 
     async def login(self, form_data: OAuth2PasswordRequestForm) -> Token:
         """
-        Authenticate a user by username and password to obtain an access token.
+        Authenticate a user and return an access token.
         Args:
-            form_data: OAuth2 form fields -- username and password.
+            form_data: The user's login credentials.
         Returns:
-            An access token with `access_token` and `token_type`.
+            A `Token` containing the access token and type.
         Raises:
-            HTTPException (401): If the username doesn't exist or the password is incorrect.
+            NotAuthenticatedError: If authentication fails.
         """
         repo = UserRepository(self.session)
         user = await repo.get_by_username(form_data.username)
@@ -33,9 +33,7 @@ class AuthService:
         is_authenticated = self.authenticate(hashed_password, form_data.password)
 
         if not is_authenticated:
-            raise HTTPException(
-                status_code=401, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"}
-            )
+            raise NotAuthenticatedError()
 
         access_token_expires = timedelta(minutes=settings.access_token_expire_minute)
         access_token = self.create_access_token(user.username, access_token_expires)
