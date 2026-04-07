@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from dependencies.service import get_service_dep
@@ -11,8 +11,11 @@ auth_router = APIRouter(prefix="/auth")
 
 ServiceDep = Annotated[AuthService, get_service_dep(AuthService)]
 
+
 @auth_router.post("/token", include_in_schema=False)
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], service: ServiceDep) -> Token:
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], service: ServiceDep
+) -> Token:
     """
     Authenticate with username and password to obtain an access token.
 
