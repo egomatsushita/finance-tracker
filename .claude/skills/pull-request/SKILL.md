@@ -1,6 +1,7 @@
 ---
 name: pull-request
-description: Create a pull request by analyzing git diff
+description: Create a pull request by analyzing git diff.
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(gh pr create:*)
 ---
 
 ## Context:
@@ -11,13 +12,6 @@ description: Create a pull request by analyzing git diff
 ## Your task:
 
 Analyze above HEAD git changes and create a PR with a generated title/Body - `gh pr create`
-
-## Code Review:
-
-First, launch the **branch-architect-review** agent with the HEAD diff. Display the full review output. Then ask the user: "Do you want to proceed with the PR? (yes/no)"
-
-- If the user confirms: proceed to generate the PR.
-- If the user declines or does not confirm: stop and wait for further instructions.
 
 ## Format:
 
