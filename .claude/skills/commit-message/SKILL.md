@@ -1,7 +1,6 @@
 ---
 name: commit-message
 description: Create a commit message by analyzing git diffs
-allowed-tools: Bash(git status:*), Bash(git diff --staged), Bash(git commit:*)
 ---
 
 ## Context
@@ -12,6 +11,13 @@ allowed-tools: Bash(git status:*), Bash(git diff --staged), Bash(git commit:*)
 ### Your task:
 
 Analyze above stage git changes and create a commit message. Use present tense and explain "why" something has changed, not just "what" has changed.
+
+## Code Review
+
+First, launch the **code-quality-reviewer** agent with the staged diff. Display the full review output. Then ask the user: "Do you want to proceed with the commit? (yes/no)"
+
+- If the user confirms: proceed to generate the commit message.
+- If the user declines or does not confirm: stop and wait for further instructions.
 
 ## Commit types:
 
