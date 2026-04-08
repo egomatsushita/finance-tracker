@@ -1,0 +1,2 @@
+- [Agent and Skill Config Reviews](project_agent_skill_config.md) — .claude/ config files require a workflow-tooling review lens, not the standard FastAPI checklist
+- [Skill diff pre-injection alignment](feedback_skill_diff_injection.md) — skills claiming to pass a diff to an agent must pre-inject it with ! backtick syntax or the agent silently falls back
