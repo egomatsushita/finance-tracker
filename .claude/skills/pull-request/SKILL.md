@@ -25,6 +25,6 @@ Extract the FT number from the current branch name. Example:
 
 ## Rules
 
-- DO NOT auto-create the PR — propose title and body and wait for user approval.
+- DO NOT auto-create the PR — propose title and body, then explicitly ask: "Shall I create this PR?" and wait for user approval before running `gh pr create`.
 - Always pass title and body explicitly to `gh pr create` — do not rely on interactive prompts.
 - If the branch has no commits ahead of main, report that and stop.

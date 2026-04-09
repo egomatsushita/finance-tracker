@@ -28,4 +28,4 @@ and mapped to HTTP responses in exception_handlers.py.
 
 ## Rules
 
-- DO NOT auto-commit — propose the message and wait for user approval.
+- DO NOT auto-commit — propose the message, then explicitly ask: "Shall I commit with this message?" and wait for user approval before running `git commit`.
