@@ -7,37 +7,16 @@ allowed-tools: Bash(git status:*), Bash(git diff --staged), Bash(git commit:*)
 ## Context
 
 - Current git status: !`git status`
-- Current git diff: !`git diff --staged`
+- Current git diff: if the output of `git diff --staged` is already visible earlier in this conversation (whether from a pre-injected hook or a manual `!git diff --staged` run), use it directly and skip the tool call. Otherwise run `Bash(git diff --staged)` to fetch it.
 
-### Your task:
-
-Analyze above stage git changes and create a commit message. Use present tense and explain "why" something has changed, not just "what" has changed.
-
-## Commit types:
-
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `refactor:` - Refactoring code
-- `test:` - Tests
-- `docs:` - Documentation
-- `style:` - Styling/formatting
-- `perf:` - Performance
-- `chore:` - Maintenance tasks
-
-## Format:
-
-Use the following format for making the commit message:
+## Format
 
 ```
 [FT-<number>] <type>: <concise_description>
 <optional_body_explaining_why>
 ```
 
-**Note:** Extract the FT number from the current branch name (visible in git status).
-
-**Attention:** Add a body when the "why" can't fit in the subject line. Focus on motivation, not implementation. Keep lines under 72 chars.
-
-### Example:
+Extract the FT number from the current branch name. Use present tense and explain "why", not "what". Add a body when the why doesn't fit in the subject line. Example:
 
 ```
 [FT-n] refactor: decouple business logic from HTTP layer
@@ -47,12 +26,6 @@ outside of a request context. Domain exceptions are now raised instead
 and mapped to HTTP responses in exception_handlers.py.
 ```
 
-## Output:
+## Rules
 
-1. Show summary of changes currently staged
-2. Propose commit message with appropriate commit type
-3. Ask for confirmation before committing
-
-## Rules:
-
-- DO NOT auto-commit - wait for user approval, and only commit if the user says so.
+- DO NOT auto-commit — propose the message and wait for user approval.
