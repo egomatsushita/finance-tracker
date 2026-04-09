@@ -1,6 +1,5 @@
 from uuid import uuid4
 
-import pytest
 from httpx import AsyncClient
 
 
@@ -308,13 +307,6 @@ async def test_update_user_not_found(client: AsyncClient, admin_token: str):
     assert response.status_code == 404
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="""
-        Bug: UserRepository.update() has no flush(), so IntegrityError surfaces at 
-        commit time after response starts
-    """,
-)
 async def test_update_user_duplicate_email(
     client: AsyncClient, admin_token: str, admin_user
 ):
@@ -339,13 +331,6 @@ async def test_update_user_duplicate_email(
     assert response.status_code == 409
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="""
-        Bug: UserRepository.update() has no flush(), so IntegrityError surfaces at 
-        commit time after response starts
-    """,
-)
 async def test_update_user_duplicate_username(
     client: AsyncClient, admin_token: str, admin_user
 ):

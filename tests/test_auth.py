@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-import pytest
 from httpx import AsyncClient
 
 from services.auth import AuthService
@@ -52,13 +51,6 @@ async def test_expired_token(client: AsyncClient, admin_user):
     assert response.status_code == 401
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="""
-        Bug: missing 'sub' raises ValidationError in verify_token, 
-        not caught as CredentialError — crashes instead of returning 401
-    """,
-)
 async def test_token_missing_sub(client: AsyncClient, admin_user):
     token = AuthService.encode_jwt({"exp": datetime(2100, 1, 1, tzinfo=timezone.utc)})
     response = await client.get(

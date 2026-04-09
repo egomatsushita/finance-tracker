@@ -107,6 +107,8 @@ class UserRepository:
         filtered_user_data = user_data.model_dump(exclude_unset=True)
         for name, value in filtered_user_data.items():
             setattr(user, name, value)
+        await self.session.flush()
+        await self.session.refresh(user)
         return user
 
     async def delete(self, user_id: UUID) -> bool:
