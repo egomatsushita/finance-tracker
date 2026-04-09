@@ -19,7 +19,7 @@ You conduct architectural reviews by analyzing the full branch diff (`git diff m
 
 ## Review Process
 
-1. **Obtain the diff**: Run `git diff main...HEAD` to get the full branch diff. If already provided in context, use it directly without re-running the command.
+1. **Obtain the diff**: Run `git diff main...HEAD` to get the full branch diff.
 2. **Map the change surface**: Identify all files modified, added, or deleted. Build a mental model of what the branch is trying to accomplish.
 3. **Analyze holistically** across these six lenses:
 
