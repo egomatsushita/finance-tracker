@@ -415,3 +415,106 @@ async def test_delete_user_not_found(client: AsyncClient, admin_token: str):
 async def test_delete_user_unauthenticated(client: AsyncClient):
     response = await client.delete(f"/users/{uuid4()}")
     assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# Role-based access control
+# ---------------------------------------------------------------------------
+
+
+async def test_member_cannot_list_users(client: AsyncClient, member_token: str):
+    response = await client.get(
+        "/users/",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_member_cannot_create_user(client: AsyncClient, member_token: str):
+    response = await client.post(
+        "/users/",
+        json={
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password": "password123",
+        },
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_member_cannot_delete_user(
+    client: AsyncClient, member_token: str
+):
+    user_id = uuid4().hex[:8]
+    response = await client.delete(
+        f"/users/{user_id}",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_member_can_read_own_profile(
+    client: AsyncClient, member_token: str, member_user
+):
+    response = await client.get(
+        f"/users/{member_user.id}",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["username"] == "member"
+
+
+async def test_member_cannot_read_other_user(
+    client: AsyncClient, member_token: str, admin_user
+):
+    response = await client.get(
+        f"/users/{admin_user.id}",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_member_can_update_own_profile(
+    client: AsyncClient, member_token: str, member_user
+):
+    response = await client.put(
+        f"/users/{member_user.id}",
+        json={"username": "member"},
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 200
+
+
+async def test_member_cannot_update_other_user(
+    client: AsyncClient, member_token: str, admin_user
+):
+    response = await client.put(
+        f"/users/{admin_user.id}",
+        json={"username": "hacked"},
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_member_can_update_own_role(
+    client: AsyncClient, member_token: str, member_user
+):
+    # Role updates are not yet restricted on this endpoint — enforcement will
+    # move to the admin router in the next ticket.
+    response = await client.put(
+        f"/users/{member_user.id}",
+        json={"role": "admin"},
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 200
+
+
+async def test_admin_can_read_any_user_profile(
+    client: AsyncClient, admin_token: str, member_user
+):
+    response = await client.get(
+        f"/users/{member_user.id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200

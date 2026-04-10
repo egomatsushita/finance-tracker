@@ -84,3 +84,28 @@ async def admin_token(client, admin_user):
         data={"username": "admin", "password": "admin"},
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture(scope="session")
+async def member_user(override_db):
+    async with override_db() as session:
+        user = User(
+            username="member",
+            email="member@example.com",
+            hashed_password=AuthService.create_hashed_password("member"),
+            role="member",
+            is_active=True,
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
+
+
+@pytest.fixture(scope="session")
+async def member_token(client, member_user):
+    response = await client.post(
+        "/auth/token",
+        data={"username": "member", "password": "member"},
+    )
+    return response.json()["access_token"]

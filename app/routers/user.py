@@ -1,9 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body
 
-from dependencies.auth import verify_token
+from dependencies.auth import RequireAdmin, VerifyOwnership
 from dependencies.params import FilterParamsDep
 from dependencies.service import get_service_dep
 from docs.user import user_create_example, user_endpoints, user_update_example
@@ -12,9 +12,7 @@ from services.user import UserService
 
 ServiceDep = Annotated[UserService, get_service_dep(UserService)]
 
-user_router = APIRouter(
-    prefix="/users", tags=["users"], dependencies=[Depends(verify_token)]
-)
+user_router = APIRouter(prefix="/users", tags=["users"])
 
 
 @user_router.get(
@@ -22,6 +20,7 @@ user_router = APIRouter(
     status_code=200,
     **user_endpoints["get_all"],
     response_model=list[UserReadSchema],
+    dependencies=[RequireAdmin],
 )
 async def read_users(
     service: ServiceDep, filter_params: FilterParamsDep
@@ -42,7 +41,11 @@ async def read_users(
 
 
 @user_router.post(
-    "/", status_code=201, **user_endpoints["create"], response_model=UserReadSchema
+    "/",
+    status_code=201,
+    **user_endpoints["create"],
+    response_model=UserReadSchema,
+    dependencies=[RequireAdmin],
 )
 async def create_user(
     service: ServiceDep,
@@ -69,6 +72,7 @@ async def create_user(
     status_code=200,
     **user_endpoints["get_one"],
     response_model=UserReadSchema,
+    dependencies=[VerifyOwnership],
 )
 async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     """
@@ -85,6 +89,7 @@ async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     status_code=200,
     **user_endpoints["update"],
     response_model=UserReadSchema,
+    dependencies=[VerifyOwnership],
 )
 async def update_user(
     user_id: UUID,
@@ -108,7 +113,12 @@ async def update_user(
     return user
 
 
-@user_router.delete("/{user_id}", status_code=204, **user_endpoints["delete"])
+@user_router.delete(
+    "/{user_id}",
+    status_code=204,
+    **user_endpoints["delete"],
+    dependencies=[RequireAdmin],
+)
 async def delete_user(user_id: UUID, service: ServiceDep) -> None:
     """
     Delete a user by the given `user_id`.

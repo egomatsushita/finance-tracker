@@ -51,3 +51,8 @@ class UserReadSchema(UserBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class CurrentUser(Base):
+    id: UUID
+    role: UserRoleEnum
