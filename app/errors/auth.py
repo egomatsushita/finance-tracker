@@ -10,3 +10,8 @@ class NotAuthenticatedError(AuthError):
 class CredentialError(AuthError):
     def __init__(self):
         super().__init__("Could not validate credentials")
+
+
+class ForbiddenError(AuthError):
+    def __init__(self):
+        super().__init__("You do not have permission to perform this action.")

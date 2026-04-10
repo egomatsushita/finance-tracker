@@ -20,15 +20,15 @@ uv run alembic upgrade head
 uv run alembic revision --autogenerate -m "description"
 ```
 
-There are no tests yet (planned). Linting with ruff is also planned but not yet configured.
+Tests use `pytest` with `httpx` and an in-memory SQLite database. Run with `uv run pytest`. Linting runs automatically via a ruff hook on file save.
 
 ## Architecture
 
 The app follows a strict **Router → Service → Repository** layered pattern. Each layer has a single responsibility:
 
 - **Routers** (`app/routers/`) — HTTP interface only: route definition, request/response schemas, dependency injection, status codes. No business logic.
-- **Services** (`app/services/`) — Business logic: validation, error raising (`HTTPException`), password hashing, schema transformation. Instantiated per-request via `get_service_dep()`.
-- **Repositories** (`app/repositories/`) — Database access only: raw SQLAlchemy queries, commit/rollback. No HTTP concerns.
+- **Services** (`app/services/`) — Business logic: validation, password hashing, schema transformation. Raises domain exceptions from `app/errors/`, never `HTTPException`. Instantiated per-request via `get_service_dep()`.
+- **Repositories** (`app/repositories/`) — Database access only: raw SQLAlchemy queries, commit/rollback. No HTTP concerns. The only layer that imports SQLAlchemy models.
 
 **Dependency injection flow:**
 `SessionDep` (async DB session) → `get_service_dep(ServiceClass)` → service instance injected into router handlers. Auth is a separate dependency (`verify_token`) injected alongside the service.
@@ -49,4 +49,4 @@ The app follows a strict **Router → Service → Repository** layered pattern. 
 
 - Use minimal project dependencies where possible.
 - Use `git switch -c` to create new branches, not `git checkout`.
-- Never raise `HTTPException` in services or repositories. Instead, raise domain exceptions from `app/errors/`. These are mapped to HTTP responses in `exception_handlers.py`.
+- Never raise `HTTPException` in services, repositories, or dependencies. Instead, raise domain exceptions from `app/errors/`. These are mapped to HTTP responses in `app/exception_handlers.py` via `register_exception_handlers()`.

@@ -1,11 +1,15 @@
 from fastapi import FastAPI, HTTPException, Request
 
-from errors.auth import CredentialError, NotAuthenticatedError
+from errors.auth import CredentialError, ForbiddenError, NotAuthenticatedError
 from errors.database import ConflictError
 from errors.user import UserAlreadyExistError, UserNotFoundError
 
 
 def register_exception_handlers(app: FastAPI):
+    @app.exception_handler(ForbiddenError)
+    async def forbidden_error_handler(req: Request, exc: ForbiddenError):
+        raise HTTPException(status_code=403, detail=str(exc))
+
     @app.exception_handler(ConflictError)
     async def conflict_error_handler(req: Request, exc: ConflictError):
         raise HTTPException(status_code=409, detail=str(exc))
