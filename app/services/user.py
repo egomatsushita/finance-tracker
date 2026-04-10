@@ -10,8 +10,9 @@ from schemas.user import (
     UserCreateHashSchema,
     UserCreateSchema,
     UserReadSchema,
+    UserUpdateAdminSchema,
     UserUpdateHashSchema,
-    UserUpdateSchema,
+    UserUpdateSelfSchema,
 )
 from services.auth import AuthService
 
@@ -89,7 +90,7 @@ class UserService:
         return UserReadSchema.model_validate(new_user)
 
     async def update(
-        self, user_id: UUID, user_data: UserUpdateSchema
+        self, user_id: UUID, user_data: UserUpdateSelfSchema | UserUpdateAdminSchema
     ) -> UserReadSchema:
         """
         Update a user's data by ID. Only fields explicitly set are applied.

@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import EmailStr
+from pydantic import ConfigDict, EmailStr
 
 from schemas.base import Base
 
@@ -10,7 +10,7 @@ from schemas.base import Base
 class UserRoleEnum(str, Enum):
     """
     admin - has full access to all users resources (create, read, update and delete)
-    user - can only read and update their own profile
+    member - can only read and update their own profile
     """
 
     admin = "admin"
@@ -35,15 +35,22 @@ class UserCreateSchema(UserBase):
 class UserUpdateBaseSchema(Base):
     username: str | None = None
     email: EmailStr | None = None
-    is_active: bool | None = None
     role: UserRoleEnum | None = None
+    is_active: bool | None = None
+
+
+class UserUpdateAdminSchema(UserUpdateBaseSchema):
+    password: str | None = None
 
 
 class UserUpdateHashSchema(UserUpdateBaseSchema):
     hashed_password: str | None = None
 
 
-class UserUpdateSchema(UserUpdateBaseSchema):
+class UserUpdateSelfSchema(Base):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+    username: str | None = None
+    email: EmailStr | None = None
     password: str | None = None
 
 
