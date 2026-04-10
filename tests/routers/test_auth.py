@@ -32,34 +32,34 @@ async def test_login_unknown_user(client: AsyncClient):
     assert response.status_code == 401
 
 
-async def test_invalid_token(client: AsyncClient, admin_user):
+async def test_invalid_token(client: AsyncClient):
     response = await client.get(
-        "/users/",
+        "/admin/users/",
         headers={"Authorization": "Bearer not-a-valid-token"},
     )
     assert response.status_code == 401
 
 
-async def test_expired_token(client: AsyncClient, admin_user):
+async def test_expired_token(client: AsyncClient):
     token = AuthService.encode_jwt(
         {"sub": "admin", "exp": datetime(2000, 1, 1, tzinfo=timezone.utc)}
     )
     response = await client.get(
-        "/users/",
+        "/admin/users/",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 401
 
 
-async def test_token_missing_sub(client: AsyncClient, admin_user):
+async def test_token_missing_sub(client: AsyncClient):
     token = AuthService.encode_jwt({"exp": datetime(2100, 1, 1, tzinfo=timezone.utc)})
     response = await client.get(
-        "/users/",
+        "/admin/users/",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 401
 
 
-async def test_missing_auth_header(client: AsyncClient, admin_user):
-    response = await client.get("/users/")
+async def test_missing_auth_header(client: AsyncClient):
+    response = await client.get("/admin/users/")
     assert response.status_code == 401

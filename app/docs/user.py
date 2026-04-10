@@ -2,15 +2,20 @@ user_create_example = {
     "username": "john-doe",
     "email": "john@example.com",
     "is_active": True,
-    "role": "user",
+    "role": "member",
     "password": "secureP@ssword123",
 }
 
-user_update_example = {
+user_update_admin_example = {
     "username": "john-doe-updated",
     "email": "john.updated@example.com",
     "is_active": True,
-    "role": "user",
+    "role": "admin",
+}
+
+user_update_self_example = {
+    "username": "john-doe-updated",
+    "email": "john.updated@example.com",
 }
 
 user_endpoints = {

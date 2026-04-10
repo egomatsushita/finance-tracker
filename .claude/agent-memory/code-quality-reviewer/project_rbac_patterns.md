@@ -4,15 +4,17 @@ description: Recurring patterns and known vulnerabilities in the user router's r
 type: project
 ---
 
-Per-endpoint RBAC was introduced in the user router via `RequireAdmin` and `VerifyOwnership` FastAPI dependencies (replacing a blanket router-level `verify_token`). Watch for these recurring issues in this area:
+The router has been split (FT-21, merged 2026-04-10) into `admin_user_router` (`/admin/users`, router-level `RequireAdmin`) and `user_router` (`/users`, router-level `VerifyOwnership`). Watch for these patterns and known gaps:
 
-1. **Role escalation via self-update (open)**: The `VerifyOwnership` dependency allows a `member` to update their own profile, but does not strip or block changes to the `role` field. A member can self-promote to `admin` via PUT `/users/{id}`. Acknowledged in test (`test_member_can_update_own_role`) and in code comment as deferred to a future ticket. Flag if it remains unresolved in future reviews.
+1. **Role escalation via self-update (resolved FT-21)**: `UserUpdateSelfSchema` uses `extra="forbid"` and omits `role`/`is_active`, so Pydantic rejects those fields with 422 before they reach the service. The fix test is `test_member_cannot_self_escalate_role`. Consider this resolved.
 
-2. **Fail-open router boundary (open)**: Router-level auth was removed in favor of per-route deps. Any new route added without an explicit dependency is publicly accessible. On any diff adding routes to `user_router`, verify auth deps are present.
+2. **Service `update()` accepts `UserUpdateSelfSchema` but is called with `UserUpdateAdminSchema` from admin router (open)**: The service type annotation is `UserUpdateSelfSchema`, yet `admin_user_router` passes `UserUpdateAdminSchema` (which has `role` and `is_active`). Python duck-typing means this works at runtime because `model_dump(exclude_unset=True)` produces compatible keys, but the annotation is a lie — it will mislead static analysis and future readers. Flag on any diff that changes the service signature.
 
-3. **Test token variable bug (resolved 2026-04-10)**: `test_admin_can_access_all_endpoints` previously used `member_token` instead of `admin_token`. Fixed in the RBAC test expansion — test now correctly uses `admin_token`.
+3. **Fail-open router boundary (mitigated)**: Both routers now use router-level auth deps (`RequireAdmin` and `VerifyOwnership` respectively), so any new route added to either router inherits the dep. The fail-open risk from per-route deps is gone, but verify router-level dep is not accidentally removed.
 
-4. **`member_user` / `member_token` fixtures are session-scoped**: Added in `tests/conftest.py`. The `member_user` fixture mutates DB state (inserts a row) at session scope. If `test_member_can_update_own_role` runs and successfully updates `role` to `admin`, the shared `member_user` object is stale — subsequent tests that rely on the member having `role="member"` may behave unexpectedly.
+4. **`member_user` / `member_token` fixtures are session-scoped**: `test_member_cannot_self_escalate_role` now expects 422 (not 200), so the fixture mutation concern from the previous `test_member_can_update_own_role` test is resolved. Stale fixture state is no longer a risk for role mutation, but watch for other tests that mutate the shared `member_user`.
 
-**Why:** Granular RBAC was introduced to support the admin/member role model. The migration from a blanket dep to per-route deps introduced these gaps.
-**How to apply:** On any diff touching `user_router` or `VerifyOwnership`, check that role field updates are gated, all routes have explicit auth deps, and session-scoped fixtures are not mutated by individual tests.
+5. **`TestGetUser.test_can_read_any_user` hits `/users/` not `/admin/users/`**: Tests in `test_admin_users.py` that use the admin token but hit the member self-service route may pass for wrong reasons. Check for mismatched URL / router intent in admin test classes.
+
+**Why:** Granular RBAC was introduced to support the admin/member role model. FT-21 moved to router-level deps and schema-level field restriction.
+**How to apply:** On any diff touching either user router or the service `update()` signature, verify (a) schema field restrictions still cover role/is_active on the self-service path, (b) router-level deps are present, (c) service type annotations match all callers.

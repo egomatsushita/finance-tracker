@@ -20,7 +20,14 @@ uv run alembic upgrade head
 uv run alembic revision --autogenerate -m "description"
 ```
 
-Tests use `pytest` with `httpx` and an in-memory SQLite database. Run with `uv run pytest`. Linting runs automatically via a ruff hook on file save.
+Tests use `pytest` with `httpx` and an in-memory SQLite database. Run with `uv run pytest`. To run a single file or test:
+
+```bash
+uv run pytest tests/routers/test_admin_users.py
+uv run pytest tests/routers/test_admin_users.py::TestCreateUser::test_valid
+```
+
+Linting runs automatically via a ruff hook on file save.
 
 ## Architecture
 
@@ -43,7 +50,7 @@ The app follows a strict **Router → Service → Repository** layered pattern. 
 
 **Docstrings:** All service and repository methods use the structured format: description / `Args:` / `Returns:` / `Raises:`.
 
-**Roles:** `admin` has full CRUD access. `member` can only read and update their own profile. Role is stored as a plain string field on the User model.
+**Roles:** `admin` has full CRUD access via `/admin/users` (`RequireAdmin`). `member` can only read and update their own profile via `/users/{user_id}` (`VerifyOwnership`). `UserUpdateSelfSchema` uses `extra="forbid"` to prevent members from sending `role` or `is_active`. Role is stored as a plain string field on the User model.
 
 ## Coding Preferences
 
