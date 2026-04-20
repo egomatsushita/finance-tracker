@@ -25,7 +25,7 @@ def upgrade() -> None:
 
     op.create_table(
         "financial_transaction",
-        sa.Column("id", sa.BigInteger, primary_key=True, autoincrement=True),
+        sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("amount", sa.Numeric(10, 2), nullable=False),
         sa.Column(
             "kind",

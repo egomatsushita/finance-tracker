@@ -33,7 +33,7 @@ The `upgrade()` body:
    ```
 
 2. **Create the `financial_transaction` table** via `op.create_table(...)`:
-   - `id`: `sa.BigInteger`, primary key, `autoincrement=True`
+   - `id`: `sa.Integer`, primary key, `autoincrement=True`
    - `amount`: `sa.Numeric(10, 2)`, `nullable=False`
    - `kind`: `sa.Enum("income", "expense", name="transaction_kind")`, `nullable=False`
    - `category`: `sa.String(50)`, `nullable=False`
