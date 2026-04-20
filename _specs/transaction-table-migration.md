@@ -18,7 +18,7 @@ Create an Alembic migration file that adds the `financial_transaction` table to 
   - `user_id`: `UUID`, `ForeignKey("user.id")`, non-nullable.
   - `transaction_date`: `DateTime`, non-nullable
   - `created_at`: `DateTime`, non-nullable, default to current UTC time. NOTE: timezone-aware datetimes
-  - `modified_at`: `DateTime`, non-nullable, default to current UTC time, updated on modification. timezone-aware datetimes
+  - `updated_at`: `DateTime`, non-nullable, default to current UTC time, updated on modification. timezone-aware datetimes
 - The `kind` enum must only allow `income` and `expense` as values
 - The `category` field accepts free-form strings; valid values are not enforced at the database level — validation belongs in the service layer
 - Add a foreign key constraint from `user_id` to `user.id`
@@ -28,7 +28,7 @@ Create an Alembic migration file that adds the `financial_transaction` table to 
 
 - Enum type (`kind`) may need to be created/dropped explicitly depending on the database dialect (PostgreSQL requires a named enum type; SQLite does not)
 - The `user` table must already exist before this migration runs — ensure the migration chain is correctly ordered
-- `created_at` and `modified_at` should use `server_default` or `default` consistently with other tables in the project
+- `created_at` and `updated_at` should use `server_default` or `default` consistently with other tables in the project
 
 ## Acceptance Criteria
 
@@ -39,7 +39,7 @@ Create an Alembic migration file that adds the `financial_transaction` table to 
 
 ## Open Questions
 
-- Should `modified_at` be updated automatically via a database trigger or handled at the application layer (service/repository)? Not in this migration — deferred to model/service layer.
+- Should `updated_at` be updated automatically via a database trigger or handled at the application layer (service/repository)? Not in this migration — deferred to model/service layer.
 - Should `transaction_date` store timezone-aware datetimes (`DateTime(timezone=True)`) or naive datetimes, consistent with existing tables? timezone-aware applied to all datetimes.
 - Is there a seed data migration needed alongside the schema migration (e.g. sample transactions for existing test users)? Not yet.
 

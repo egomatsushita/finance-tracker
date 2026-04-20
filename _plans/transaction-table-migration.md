@@ -41,7 +41,7 @@ The `upgrade()` body:
    - `user_id`: `sa.UUID`, `sa.ForeignKey("user.id")`, `nullable=False`
    - `transaction_date`: `sa.DateTime(timezone=True)`, `nullable=False`
    - `created_at`: `sa.DateTime(timezone=True)`, `nullable=False`, `server_default=sa.func.now()`
-   - `modified_at`: `sa.DateTime(timezone=True)`, `nullable=False`, `server_default=sa.func.now()`
+   - `updated_at`: `sa.DateTime(timezone=True)`, `nullable=False`, `server_default=sa.func.now()`
 
 ---
 
