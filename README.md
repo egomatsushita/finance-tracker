@@ -69,8 +69,8 @@ An admin user is created automatically during migration
 - [x] Initial setup - Install uv, fastapi, uvicorn, alembic
 - [x] User model, repository, service and router
 - [x] Auth service and router
-- [ ] Transaction model, repository, service and router
-- [ ] Tests
+- [x] Transaction model, repository, service and router
+- [x] Tests
 - [ ] GitHub actions - runs pytest and ruff on every push
 - [ ] Docker + docker-compose
 - [ ] PostgreSQL support
