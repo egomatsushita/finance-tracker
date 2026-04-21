@@ -35,10 +35,14 @@ The app follows a strict **Router → Service → Repository** layered pattern. 
 
 - **Routers** (`app/routers/`) — HTTP interface only: route definition, request/response schemas, dependency injection, status codes. No business logic.
 - **Services** (`app/services/`) — Business logic: validation, password hashing, schema transformation. Raises domain exceptions from `app/errors/`, never `HTTPException`. Instantiated per-request via `get_service_dep()`.
-- **Repositories** (`app/repositories/`) — Database access only: raw SQLAlchemy queries, commit/rollback. No HTTP concerns. The only layer that imports SQLAlchemy models.
+- **Repositories** (`app/repositories/`) — Database access only: raw SQLAlchemy queries. No HTTP concerns. The only layer that imports SQLAlchemy models. Repositories call `flush()` only — never `commit()`. The commit/rollback happens in the `get_async_session` dependency (`dependencies/database.py`), which also catches `IntegrityError` and raises `ConflictError`.
 
 **Dependency injection flow:**
-`SessionDep` (async DB session) → `get_service_dep(ServiceClass)` → service instance injected into router handlers. Auth is a separate dependency (`verify_token`) injected alongside the service.
+`SessionDep` (async DB session) → `get_service_dep(ServiceClass)` → service instance injected into router handlers. Auth is a separate dependency (`verify_token`) injected alongside the service. Wire up a service with:
+```python
+ServiceDep = Annotated[MyService, get_service_dep(MyService)]
+```
+Then use `service: ServiceDep` in handler parameters.
 
 **Import paths:** The `app/` directory is the Python source root. Imports are relative to it (e.g., `from services.user import UserService`), not `from app.services...`. Alembic's `env.py` imports `from app.config.settings` because it runs from the project root.
 
@@ -51,6 +55,12 @@ The app follows a strict **Router → Service → Repository** layered pattern. 
 **Docstrings:** All service and repository methods use the structured format: description / `Args:` / `Returns:` / `Raises:`.
 
 **Roles:** `admin` has full CRUD access via `/admin/users` (`RequireAdmin`). `member` can only read and update their own profile via `/users/{user_id}` (`VerifyOwnership`). `UserUpdateSelfSchema` uses `extra="forbid"` to prevent members from sending `role` or `is_active`. Role is stored as a plain string field on the User model.
+
+**OpenAPI docs:** Endpoint metadata and body examples live in `app/docs/` as dicts and are unpacked into route decorators (e.g., `@router.get("/", **my_endpoints["get_all"])`). Follow this pattern for new routers.
+
+**Filter parameter validation:** Cross-field query param validation (e.g., date range checks) that goes beyond what Pydantic can express belongs in `app/dependencies/params.py`. Raise `InvalidFilterError` from there, not in schemas or services.
+
+**Repository ordering:** Map `order_by` strings to ORM columns via a module-level dict (e.g., `_ORDER_BY_COLUMNS = {"created_at": Model.created_at, ...}`) rather than passing raw strings to SQLAlchemy.
 
 ## Coding Preferences
 
