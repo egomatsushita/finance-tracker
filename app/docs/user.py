@@ -30,11 +30,11 @@ user_endpoints = {
     "create": {
         "summary": "Create a user",
         "description": """
-            Create a new user with the following information: </br></br>
-            - **username**: must be unique </br>
-            - **email**: must be a valid and unique email address </br>
-            - **is_active**: indicates whether the account is active - inactive users cannot log in </br>
-            - **role**: `admin` has full access to all users resources (create, read, update, delete) | `user` can only read and update their own profile </br>
+            Create a new user with the following information: <br/><br/>
+            - **username**: must be unique <br/>
+            - **email**: must be a valid and unique email address <br/>
+            - **is_active**: indicates whether the account is active - inactive users cannot log in <br/>
+            - **role**: `admin` has full access to all users resources (create, read, update, delete) | `user` can only read and update their own profile <br/>
             - **password**: use a strong password with letters, numbers, and special characters
         """,
     },
