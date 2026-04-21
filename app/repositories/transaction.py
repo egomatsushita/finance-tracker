@@ -69,18 +69,25 @@ class TransactionRepository:
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def get_by_id(self, transaction_id: int) -> FinancialTransaction | None:
+    async def get_by_id(
+        self, user_id: UUID, transaction_id: int
+    ) -> FinancialTransaction | None:
         """
-        Retrieve a single transaction by the given ID.
+        Retrieve a single transaction by ID, scoped to the given user.
 
         Args:
+            user_id: The ID of the user who owns the transaction.
             transaction_id: A unique transaction ID.
 
         Returns:
-            A `FinancialTransaction` instance matching the ID or `None` if not found.
+            A `FinancialTransaction` instance matching both IDs, or `None` if not found.
         """
-        transaction = await self.session.get(FinancialTransaction, transaction_id)
-        return transaction
+        result = await self.session.execute(
+            select(FinancialTransaction)
+            .where(FinancialTransaction.id == transaction_id)
+            .where(FinancialTransaction.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
 
     async def create(
         self, user_id: UUID, data: TransactionCreateSchema
@@ -105,46 +112,45 @@ class TransactionRepository:
         return transaction
 
     async def update(
-        self, transaction_id: int, data: TransactionUpdateSchema
+        self, user_id: UUID, transaction_id: int, data: TransactionUpdateSchema
     ) -> FinancialTransaction | None:
         """
-        Update a transaction by the given ID.
+        Update a transaction by ID, scoped to the given user.
 
         Args:
+            user_id: The ID of the user who owns the transaction.
             transaction_id: A unique transaction ID.
             data: Validated optional fields to update a `FinancialTransaction` instance.
 
         Returns:
-            An updated `FinancialTransaction` instance or `None` if not found.
+            The updated `FinancialTransaction` instance, or `None` if not found.
 
         Raises:
             SQLAlchemyError: If the flush fails due to a constraint violation.
         """
-        transaction = await self.get_by_id(transaction_id)
-
+        transaction = await self.get_by_id(user_id, transaction_id)
         if transaction is None:
             return None
-
         for name, value in data.model_dump(exclude_unset=True).items():
             setattr(transaction, name, value)
         await self.session.flush()
         await self.session.refresh(transaction)
         return transaction
 
-    async def delete(self, transaction_id: int) -> bool:
+    async def delete(self, user_id: UUID, transaction_id: int) -> bool:
         """
-        Delete a transaction by the given ID.
+        Delete a transaction by ID, scoped to the given user.
 
         Args:
+            user_id: The ID of the user who owns the transaction.
             transaction_id: A unique transaction ID.
 
         Returns:
-            `True` if the transaction was deleted. `False` if not found.
+            `True` if the transaction was deleted, `False` if not found.
         """
-        transaction = await self.get_by_id(transaction_id)
-
+        transaction = await self.get_by_id(user_id, transaction_id)
         if transaction is None:
             return False
-
         await self.session.delete(transaction)
+        await self.session.flush()
         return True

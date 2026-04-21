@@ -42,7 +42,7 @@ _VALID_CATEGORIES: dict[TransactionKindEnum, set[str]] = {
 
 
 class TransactionBase(Base):
-    amount: Decimal = Field(gt=0)
+    amount: Decimal = Field(gt=0, examples=["50.00"])
     kind: TransactionKindEnum
     category: str
     description: str | None = None
@@ -55,7 +55,8 @@ class TransactionCreateSchema(TransactionBase):
         valid = _VALID_CATEGORIES.get(self.kind, set())
         if self.category not in valid:
             raise ValueError(
-                f"'{self.category}' is not a valid category for kind '{self.kind.value}'. "
+                f"'{self.category}' is not a valid category for "
+                f"kind '{self.kind.value}'. "
                 f"Valid options: {sorted(valid)}"
             )
         return self
@@ -74,7 +75,8 @@ class TransactionUpdateSchema(Base):
             valid = _VALID_CATEGORIES.get(self.kind, set())
             if self.category not in valid:
                 raise ValueError(
-                    f"'{self.category}' is not a valid category for kind '{self.kind.value}'. "
+                    f"'{self.category}' is not a valid category for "
+                    f"kind '{self.kind.value}'. "
                     f"Valid options: {sorted(valid)}"
                 )
         return self

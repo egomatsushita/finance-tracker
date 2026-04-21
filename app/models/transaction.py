@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.types import UUID, Integer, DateTime, Numeric
+from sqlalchemy.types import UUID, DateTime, Integer, Numeric
 
 from models.base import Base
 
