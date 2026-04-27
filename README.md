@@ -1,6 +1,6 @@
 # Personal Financial Tracker API
 
-A RESTful API for tracking personal income, expenses, and budgets. Built with modern async Python patterns and Router &rarr; Service &rarr; Repository architecture.
+A RESTful API built to learn FastAPI and Pydantic, tracking personal income, expenses, and budgets. Uses modern async Python patterns and a Router &rarr; Service &rarr; Repository architecture.
 
 ## Setup & Installation
 
@@ -55,14 +55,12 @@ A RESTful API for tracking personal income, expenses, and budgets. Built with mo
 
 ### Default Admin Credentials
 
-An admin user is created automatically during migration
+Seed users are created automatically during migration to provide a full app experience out of the box. Seed transactions are planned for a future release.
 
-| Field    | Value   |
-| -------- | ------- |
-| username | `admin` |
-| password | `admin` |
-
-> ⚠️ Change the admin password immediately after first login.
+| Role   | Username   | Password   |
+| ------ | ---------- | ---------- |
+| admin  | `admin`    | `admin`    |
+| member | `member`   | `member`   |
 
 ## Roadmap
 
@@ -73,4 +71,3 @@ An admin user is created automatically during migration
 - [x] Tests
 - [ ] GitHub actions - runs pytest and ruff on every push
 - [ ] Docker + docker-compose
-- [ ] PostgreSQL support
