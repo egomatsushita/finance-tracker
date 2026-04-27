@@ -1,11 +1,16 @@
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.user import User
 from schemas.params import FilterParams
 from schemas.user import UserCreateHashSchema, UserUpdateHashSchema
+
+ORDER_BY_COLUMNS = {
+    "created_at": User.created_at,
+    "updated_at": User.updated_at,
+}
 
 
 class UserRepository:
@@ -38,7 +43,7 @@ class UserRepository:
             select(User)
             .offset(filter_params.offset)
             .limit(filter_params.limit)
-            .order_by(text(filter_params.order_by))
+            .order_by(ORDER_BY_COLUMNS[filter_params.order_by])
         )
         users = resp.scalars().all()
         return users

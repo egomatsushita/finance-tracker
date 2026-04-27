@@ -7,7 +7,7 @@ from models.transaction import FinancialTransaction
 from schemas.params import TransactionFilterParams
 from schemas.transaction import TransactionCreateSchema, TransactionUpdateSchema
 
-_ORDER_BY_COLUMNS = {
+ORDER_BY_COLUMNS = {
     "created_at": FinancialTransaction.created_at,
     "updated_at": FinancialTransaction.updated_at,
     "transaction_date": FinancialTransaction.transaction_date,
@@ -64,7 +64,7 @@ class TransactionRepository:
         query = (
             query.offset(filter_params.offset)
             .limit(filter_params.limit)
-            .order_by(_ORDER_BY_COLUMNS[filter_params.order_by])
+            .order_by(ORDER_BY_COLUMNS[filter_params.order_by])
         )
         result = await self.session.execute(query)
         return result.scalars().all()
