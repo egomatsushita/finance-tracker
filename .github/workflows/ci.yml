@@ -20,6 +20,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-test-secret-key
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

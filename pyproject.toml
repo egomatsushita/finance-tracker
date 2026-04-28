@@ -39,7 +39,7 @@ pythonpath = ["app"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-exclude = ["app/docs"]
+exclude = ["app/docs", "alembic"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N"]
