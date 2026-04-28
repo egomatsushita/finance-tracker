@@ -62,6 +62,34 @@ Seed users are created automatically during migration to provide a full app expe
 | admin  | `admin`    | `admin`    |
 | member | `member`   | `member`   |
 
+## Running with Docker
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+### Setup
+
+1. **Set up environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Open `.env` and fill in the required values: `SECRET_KEY` and `DATABASE_URL`
+
+2. **Start the server**
+
+   ```bash
+   docker compose up
+   ```
+
+   Migrations run automatically on startup. The API will be available at `http://localhost:8000`.
+   Interactive docs at `http://localhost:8000/redoc`.
+   Interactive docs with "Try it out" at `http://localhost:8000/docs`.
+
+Source code changes on the host are reflected immediately via hot-reload — no rebuild needed.
+
 ## Roadmap
 
 - [x] Initial setup - Install uv, fastapi, uvicorn, alembic
@@ -69,5 +97,6 @@ Seed users are created automatically during migration to provide a full app expe
 - [x] Auth service and router
 - [x] Transaction model, repository, service and router
 - [x] Tests
-- [ ] GitHub actions - runs pytest and ruff on every push
-- [ ] Docker + docker-compose
+- [x] Centralized logging
+- [x] GitHub actions - runs pytest and ruff on every push
+- [x] Docker + docker-compose
