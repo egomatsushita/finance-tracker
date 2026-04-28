@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -127,3 +128,50 @@ class TestDelete:
         await service.delete(user_id, t_id)
 
         assert await session.get(FinancialTransaction, t_id) is None
+
+
+class TestLogging:
+    async def test_create_emits_info(self, service, user_id, caplog):
+        data = TransactionCreateSchema(
+            amount="10.00",
+            kind="income",
+            category="salary",
+            transaction_date=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
+        with caplog.at_level(logging.INFO, logger="services.transaction"):
+            result = await service.create(user_id, data)
+        assert any(
+            "transaction_created" in r.message
+            and str(result.id) in r.message
+            and str(user_id) in r.message
+            for r in caplog.records
+        )
+
+    async def test_update_emits_info(self, service, user_id, transaction, caplog):
+        data = TransactionUpdateSchema(description="Log test")
+        with caplog.at_level(logging.INFO, logger="services.transaction"):
+            result = await service.update(user_id, transaction.id, data)
+        assert any(
+            "transaction_updated" in r.message and str(result.id) in r.message
+            for r in caplog.records
+        )
+
+    async def test_delete_emits_info(self, service, session, user_id, caplog):
+        t = FinancialTransaction(
+            amount="5.00",
+            kind="expense",
+            category="clothing",
+            user_id=user_id,
+            transaction_date=datetime(2026, 6, 1, tzinfo=timezone.utc),
+        )
+        session.add(t)
+        await session.flush()
+        await session.refresh(t)
+        t_id = t.id
+
+        with caplog.at_level(logging.INFO, logger="services.transaction"):
+            await service.delete(user_id, t_id)
+        assert any(
+            "transaction_deleted" in r.message and str(t_id) in r.message
+            for r in caplog.records
+        )

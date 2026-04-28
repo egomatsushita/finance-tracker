@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,8 @@ from schemas.transaction import (
     TransactionReadSchema,
     TransactionUpdateSchema,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TransactionService:
@@ -69,6 +72,9 @@ class TransactionService:
             The created transaction as a TransactionReadSchema instance.
         """
         transaction = await self.repo.create(user_id, data)
+        logger.info(
+            "transaction_created transaction_id=%s user_id=%s", transaction.id, user_id
+        )
         return TransactionReadSchema.model_validate(transaction)
 
     async def update(
@@ -92,6 +98,9 @@ class TransactionService:
         transaction = await self.repo.update(user_id, transaction_id, data)
         if transaction is None:
             raise TransactionNotFoundError()
+        logger.info(
+            "transaction_updated transaction_id=%s user_id=%s", transaction.id, user_id
+        )
         return TransactionReadSchema.model_validate(transaction)
 
     async def delete(self, user_id: UUID, transaction_id: int) -> None:
@@ -107,3 +116,6 @@ class TransactionService:
         """
         if not await self.repo.delete(user_id, transaction_id):
             raise TransactionNotFoundError()
+        logger.info(
+            "transaction_deleted transaction_id=%s user_id=%s", transaction_id, user_id
+        )

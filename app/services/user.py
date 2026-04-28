@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +16,8 @@ from schemas.user import (
     UserUpdateSelfSchema,
 )
 from services.auth import AuthService
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -87,6 +90,7 @@ class UserService:
         except IntegrityError:
             raise UserAlreadyExistError()
 
+        logger.info("user_created user_id=%s", new_user.id)
         return UserReadSchema.model_validate(new_user)
 
     async def update(
@@ -121,6 +125,9 @@ class UserService:
         if updated_user is None:
             raise UserNotFoundError()
 
+        # Exclude credential fields — log field names only, never values.
+        safe_fields = user_data.model_fields_set - {"password", "hashed_password"}
+        logger.info("user_updated user_id=%s fields=%s", user_id, sorted(safe_fields))
         return UserReadSchema.model_validate(updated_user)
 
     async def delete(self, user_id: UUID) -> None:
@@ -134,3 +141,4 @@ class UserService:
         success = await self.repo.delete(user_id)
         if not success:
             raise UserNotFoundError()
+        logger.info("user_deleted user_id=%s", user_id)
