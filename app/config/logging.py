@@ -1,6 +1,8 @@
 import logging
 import sys
 
+_state = {"configured": False}
+
 
 def configure_logging(log_level: str = "INFO") -> None:
     """
@@ -10,14 +12,11 @@ def configure_logging(log_level: str = "INFO") -> None:
         log_level: the desired log level name (e.g. "INFO", "DEBUG"). Falls back
                    to INFO if the value is not a recognised logging level.
     """
-    logger = logging.getLogger()
-    if any(
-        isinstance(h, logging.StreamHandler)
-        and getattr(h, "stream", None) is sys.stdout
-        for h in logger.handlers
-    ):
+    if _state["configured"]:
         return
+    _state["configured"] = True
 
+    logger = logging.getLogger()
     level = getattr(logging, log_level.strip().upper(), None)
     if not isinstance(level, int):
         level = logging.INFO

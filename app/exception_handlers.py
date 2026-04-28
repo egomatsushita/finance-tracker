@@ -24,7 +24,7 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(ForbiddenError)
     async def forbidden_error_handler(req: Request, exc: ForbiddenError):
-        logger.warning("SECURITY forbidden method=%s path=%s", req.method, req.url.path)
+        logger.warning("security_forbidden method=%s path=%s", req.method, req.url.path)
         raise HTTPException(status_code=403, detail=str(exc))
 
     @app.exception_handler(ConflictError)
@@ -34,7 +34,7 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(CredentialError)
     async def credential_error_handler(req: Request, exc: CredentialError):
         logger.warning(
-            "SECURITY credential_error method=%s path=%s", req.method, req.url.path
+            "security_credential_error method=%s path=%s", req.method, req.url.path
         )
         raise HTTPException(
             status_code=401, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}
@@ -43,7 +43,7 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(NotAuthenticatedError)
     async def not_authenticated_error_handler(req: Request, exc: NotAuthenticatedError):
         logger.warning(
-            "SECURITY not_authenticated method=%s path=%s", req.method, req.url.path
+            "security_not_authenticated method=%s path=%s", req.method, req.url.path
         )
         raise HTTPException(
             status_code=401, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}

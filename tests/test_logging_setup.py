@@ -10,7 +10,8 @@ from config.logging import configure_logging
 
 @pytest.fixture
 def isolated_logger(monkeypatch):
-    """Patch the logging module as seen inside configure_logging only."""
+    """Patch the logging module and reset _state so each test starts fresh."""
+    monkeypatch.setitem(config_logging_mod._state, "configured", False)
     fresh = logging.Logger("_test_root")
     mock_logging = types.SimpleNamespace(
         getLogger=lambda *args: fresh,

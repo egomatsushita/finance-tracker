@@ -4,9 +4,7 @@ from uuid import uuid4
 import pytest
 
 from errors.user import UserAlreadyExistError, UserNotFoundError
-from models.user import User
 from schemas.user import UserCreateSchema, UserUpdateAdminSchema
-from services.auth import AuthService
 from services.user import UserService
 
 
@@ -22,19 +20,14 @@ async def service(session):
 
 
 @pytest.fixture
-async def created_user(session):
+async def created_user(service):
     uid = str(uuid4())[:8]
-    user = User(
+    data = UserCreateSchema(
         username=f"user_{uid}",
         email=f"user_{uid}@example.com",
-        hashed_password=AuthService.create_hashed_password("password"),
-        role="member",
-        is_active=True,
+        password="password",
     )
-    session.add(user)
-    await session.flush()
-    await session.refresh(user)
-    return user
+    return await service.create(data)
 
 
 class TestCreate:

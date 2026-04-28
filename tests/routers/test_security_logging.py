@@ -10,7 +10,7 @@ class TestSecurityLogging:
             )
         assert response.status_code == 401
         assert any(
-            "SECURITY" in r.message and r.levelno == logging.WARNING
+            "security_not_authenticated" in r.message and r.levelno == logging.WARNING
             for r in caplog.records
         )
 
@@ -22,7 +22,8 @@ class TestSecurityLogging:
             )
         assert response.status_code == 403
         assert any(
-            "SECURITY" in r.message and "forbidden" in r.message for r in caplog.records
+            "security_forbidden" in r.message and r.levelno == logging.WARNING
+            for r in caplog.records
         )
 
     async def test_no_token_in_warning_message(self, client, caplog):
