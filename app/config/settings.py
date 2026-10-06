@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     uvicorn_port: int = 8000
     access_token_expire_minute: int = 30
     log_level: str = "INFO"
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     model_config = SettingsConfigDict(env_file=".env")
 
