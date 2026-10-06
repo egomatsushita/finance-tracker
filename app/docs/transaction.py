@@ -42,4 +42,14 @@ transaction_endpoints = {
         "summary": "Delete a transaction",
         "description": "Permanently delete a transaction by its unique ID.",
     },
+    "summary": {
+        "summary": "Get transaction summary",
+        "description": (
+            "Retrieve aggregated totals for the authenticated user's "
+            "transactions: `total_income`, `total_expense`, `net`, a "
+            "`by_category` breakdown, and a `by_month` trend. Supports "
+            "optional `transaction_date_from`/`transaction_date_to` filters, "
+            "applied to all aggregates."
+        ),
+    },
 }

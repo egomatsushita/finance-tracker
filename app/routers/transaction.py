@@ -3,7 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Response
 
 from dependencies.auth import CurrentUserDep
-from dependencies.params import TransactionFilterParamsDep
+from dependencies.params import (
+    TransactionFilterParamsDep,
+    TransactionSummaryFilterParamsDep,
+)
 from dependencies.service import get_service_dep
 from docs.transaction import (
     transaction_create_example,
@@ -13,6 +16,7 @@ from docs.transaction import (
 from schemas.transaction import (
     TransactionCreateSchema,
     TransactionReadSchema,
+    TransactionSummarySchema,
     TransactionUpdateSchema,
 )
 from services.transaction import TransactionService
@@ -56,6 +60,24 @@ async def create_transaction(
     Create a new transaction for the authenticated user.
     """
     return await service.create(current_user.id, data)
+
+
+@transaction_router.get(
+    "/summary",
+    status_code=200,
+    **transaction_endpoints["summary"],
+    response_model=TransactionSummarySchema,
+)
+async def read_transaction_summary(
+    service: ServiceDep,
+    current_user: CurrentUserDep,
+    filter_params: TransactionSummaryFilterParamsDep,
+) -> TransactionSummarySchema:
+    """
+    Retrieve aggregated income/expense totals, category breakdown, and
+    monthly trend for the authenticated user's transactions.
+    """
+    return await service.get_summary(current_user.id, filter_params)
 
 
 @transaction_router.get(
