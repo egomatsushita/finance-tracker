@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from config.logging import configure_logging
 from config.settings import settings
@@ -12,6 +13,14 @@ from routers.user import user_router
 configure_logging(settings.log_level)
 
 app = FastAPI(title="Personal Finance Tracker")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 register_exception_handlers(app)
 app.include_router(auth_router)
