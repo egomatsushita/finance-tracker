@@ -79,3 +79,29 @@ async def test_member_cannot_send_is_active(
         headers={"Authorization": f"Bearer {member_token}"},
     )
     assert response.status_code == 422
+
+
+async def test_member_can_read_own_profile_via_me(
+    client: AsyncClient, member_token: str, member_user
+):
+    response = await client.get(
+        "/users/me",
+        headers={"Authorization": f"Bearer {member_token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["username"] == "member"
+    assert response.json()["id"] == str(member_user.id)
+
+
+async def test_admin_can_read_own_profile_via_me(client: AsyncClient, admin_token: str):
+    response = await client.get(
+        "/users/me",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["username"] == "admin"
+
+
+async def test_get_me_unauthenticated(client: AsyncClient):
+    response = await client.get("/users/me")
+    assert response.status_code == 401
