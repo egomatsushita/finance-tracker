@@ -27,6 +27,10 @@ user_endpoints = {
         "summary": "Get a user",
         "description": "Retrieve a single user by their unique ID.",
     },
+    "get_me": {
+        "summary": "Get the current user",
+        "description": "Retrieve the authenticated caller's own profile.",
+    },
     "create": {
         "summary": "Create a user",
         "description": """
