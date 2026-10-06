@@ -20,3 +20,8 @@ class TransactionFilterParams(FilterParams):
     category: str | None = None
     transaction_date_from: datetime | None = None
     transaction_date_to: datetime | None = None
+
+
+class TransactionSummaryFilterParams(BaseModel):
+    transaction_date_from: datetime | None = None
+    transaction_date_to: datetime | None = None

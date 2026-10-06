@@ -1,14 +1,18 @@
 import logging
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from errors.transaction import TransactionNotFoundError
 from repositories.transaction import TransactionRepository
-from schemas.params import TransactionFilterParams
+from schemas.params import TransactionFilterParams, TransactionSummaryFilterParams
 from schemas.transaction import (
+    CategorySummary,
+    MonthSummary,
     TransactionCreateSchema,
     TransactionReadSchema,
+    TransactionSummarySchema,
     TransactionUpdateSchema,
 )
 
@@ -118,4 +122,51 @@ class TransactionService:
             raise TransactionNotFoundError()
         logger.info(
             "transaction_deleted transaction_id=%s user_id=%s", transaction_id, user_id
+        )
+
+    async def get_summary(
+        self, user_id: UUID, filter_params: TransactionSummaryFilterParams
+    ) -> TransactionSummarySchema:
+        """
+        Return aggregated income/expense totals, category breakdown, and
+        monthly trend for a user's transactions.
+
+        Args:
+            user_id: the UUID of the authenticated user.
+            filter_params: optional `transaction_date` range filters.
+
+        Returns:
+            A validated TransactionSummarySchema instance. Totals default to
+            `Decimal("0.00")` and breakdown lists default to empty when the
+            user has no matching transactions.
+        """
+        summary = await self.repo.get_summary(user_id, filter_params)
+
+        totals = summary["totals"]
+        total_income = totals.get("income", Decimal("0.00"))
+        total_expense = totals.get("expense", Decimal("0.00"))
+
+        by_category = [
+            CategorySummary(kind=kind, category=category, total=total)
+            for kind, category, total in summary["by_category"]
+        ]
+
+        by_month_totals: dict[str, dict[str, Decimal]] = {}
+        for month, kind, total in summary["by_month"]:
+            by_month_totals.setdefault(
+                month, {"income": Decimal("0.00"), "expense": Decimal("0.00")}
+            )[kind] = total
+        by_month = [
+            MonthSummary(
+                month=month, income=values["income"], expense=values["expense"]
+            )
+            for month, values in sorted(by_month_totals.items())
+        ]
+
+        return TransactionSummarySchema(
+            total_income=total_income,
+            total_expense=total_expense,
+            net=total_income - total_expense,
+            by_category=by_category,
+            by_month=by_month,
         )

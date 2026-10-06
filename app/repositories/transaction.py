@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.transaction import FinancialTransaction
-from schemas.params import TransactionFilterParams
+from schemas.params import TransactionFilterParams, TransactionSummaryFilterParams
 from schemas.transaction import TransactionCreateSchema, TransactionUpdateSchema
 
 ORDER_BY_COLUMNS = {
@@ -154,3 +154,75 @@ class TransactionRepository:
         await self.session.delete(transaction)
         await self.session.flush()
         return True
+
+    async def get_summary(
+        self, user_id: UUID, filter_params: TransactionSummaryFilterParams
+    ) -> dict:
+        """
+        Aggregate income/expense totals, category breakdown, and monthly
+        trend for a given user's transactions.
+
+        Args:
+            user_id: The ID of the user whose transactions to aggregate.
+            filter_params: Optional `transaction_date` range filters.
+
+        Returns:
+            A dict with keys:
+                - `totals`: a mapping of `kind` -> summed `Decimal` amount.
+                - `by_category`: a list of `(kind, category, total)` tuples.
+                - `by_month`: a list of `(month, kind, total)` tuples, where
+                  `month` is formatted as `"YYYY-MM"`.
+        """
+        filters = [FinancialTransaction.user_id == user_id]
+        if filter_params.transaction_date_from is not None:
+            filters.append(
+                FinancialTransaction.transaction_date
+                >= filter_params.transaction_date_from
+            )
+        if filter_params.transaction_date_to is not None:
+            filters.append(
+                FinancialTransaction.transaction_date
+                <= filter_params.transaction_date_to
+            )
+
+        totals_query = (
+            select(
+                FinancialTransaction.kind,
+                func.sum(FinancialTransaction.amount).label("total"),
+            )
+            .where(*filters)
+            .group_by(FinancialTransaction.kind)
+        )
+        totals_result = await self.session.execute(totals_query)
+        totals = {kind: total for kind, total in totals_result.all()}
+
+        by_category_query = (
+            select(
+                FinancialTransaction.kind,
+                FinancialTransaction.category,
+                func.sum(FinancialTransaction.amount).label("total"),
+            )
+            .where(*filters)
+            .group_by(FinancialTransaction.kind, FinancialTransaction.category)
+        )
+        by_category_result = await self.session.execute(by_category_query)
+        by_category = by_category_result.all()
+
+        month_expr = func.strftime("%Y-%m", FinancialTransaction.transaction_date)
+        by_month_query = (
+            select(
+                month_expr.label("month"),
+                FinancialTransaction.kind,
+                func.sum(FinancialTransaction.amount).label("total"),
+            )
+            .where(*filters)
+            .group_by(month_expr, FinancialTransaction.kind)
+        )
+        by_month_result = await self.session.execute(by_month_query)
+        by_month = by_month_result.all()
+
+        return {
+            "totals": totals,
+            "by_category": by_category,
+            "by_month": by_month,
+        }

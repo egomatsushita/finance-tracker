@@ -87,3 +87,23 @@ class TransactionReadSchema(TransactionBase):
     user_id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class CategorySummary(Base):
+    kind: TransactionKindEnum
+    category: str
+    total: Decimal
+
+
+class MonthSummary(Base):
+    month: str
+    income: Decimal
+    expense: Decimal
+
+
+class TransactionSummarySchema(Base):
+    total_income: Decimal
+    total_expense: Decimal
+    net: Decimal
+    by_category: list[CategorySummary]
+    by_month: list[MonthSummary]
