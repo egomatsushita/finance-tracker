@@ -1,24 +1,24 @@
-import type { Metadata } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
-import './globals.css';
-import { Providers } from './providers';
+import type { Metadata } from 'next'
+import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
+import './globals.css'
+import { Providers } from './providers'
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   weight: 'variable',
   variable: '--font-ibm-sans',
-});
+})
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-ibm-mono',
-});
+})
 
 export const metadata: Metadata = {
   title: 'Finance Tracker',
   description: 'Personal finance dashboard',
-};
+}
 
 const colorSchemeScript = `
 (function () {
@@ -31,7 +31,7 @@ const colorSchemeScript = `
     apply(e.matches);
   });
 })();
-`;
+`
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
@@ -46,5 +46,5 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }

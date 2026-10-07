@@ -8,7 +8,7 @@ const colorTokens = [
   { name: 'Income', className: 'bg-income', role: 'Positive amounts' },
   { name: 'Expense', className: 'bg-expense', role: 'Negative amounts / alerts' },
   { name: 'Highlight', className: 'bg-highlight', role: 'Signature KPI figure (used sparingly)' },
-];
+]
 
 export default function DesignPage() {
   return (
@@ -72,5 +72,5 @@ export default function DesignPage() {
         </section>
       </div>
     </main>
-  );
+  )
 }
