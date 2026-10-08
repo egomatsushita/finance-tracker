@@ -6,5 +6,5 @@ export default function Home() {
       </h1>
       <p className="font-mono text-sm text-muted-text">1,248.50</p>
     </main>
-  );
+  )
 }
