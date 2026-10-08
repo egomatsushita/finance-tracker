@@ -3,3 +3,4 @@
 - [RBAC patterns and known gaps](project_rbac_patterns.md) — role escalation via self-update, fail-open router boundary, and mismatched token variable bug in user router tests
 - [Transaction model/repo/schema patterns](project_transaction_patterns.md) — duplicate method defs, text() injection risk, user_id IDOR gap, update validator blind spot, missing amount sign constraint
 - [Logging implementation patterns](project_logging_patterns.md) — lazy %s formatting required, logger below imports, ownership-based idempotency guard, sensitive field filtering pattern
+- [Web frontend patterns (FT-35)](project_web_frontend_patterns.md) — Next.js API client/auth foundation: localStorage JWT, dedup 401 redirect, hydrate() over-broad error handling
