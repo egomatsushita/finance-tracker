@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { clearToken, getToken, getWithAuthHandling, loginRequest, resetUnauthorizedGuard, setToken } from './api'
+import { ApiError, clearToken, getToken, getWithAuthHandling, loginRequest, resetUnauthorizedGuard, setToken } from './api'
 import type { User } from './types'
 
 type AuthContextValue = {
@@ -18,8 +18,13 @@ async function hydrate(): Promise<User | null> {
   if (!token) return null
   try {
     return await getWithAuthHandling<User>('/users/me', true)
-  } catch {
-    clearToken()
+  } catch (err) {
+    // Only a confirmed 401 means the token is actually invalid. A transient
+    // network/server failure must not wipe a token that's still good —
+    // otherwise a blip during hydration forces a real re-login.
+    if (err instanceof ApiError && err.status === 401) {
+      clearToken()
+    }
     return null
   }
 }

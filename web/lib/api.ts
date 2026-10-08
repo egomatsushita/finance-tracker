@@ -1,6 +1,11 @@
 import type { ApiErrorBody, LoginResponse } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+// Token lives in localStorage, not an httpOnly cookie — an accepted tradeoff
+// for this foundation ticket (see _specs/api-client-auth-foundation.md).
+// Means any XSS can read the token; revisit if that becomes a priority
+// (would need a backend-set httpOnly cookie + CSRF token instead).
 const TOKEN_KEY = 'ft_token'
 
 export class ApiError extends Error {
