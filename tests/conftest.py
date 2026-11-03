@@ -1,4 +1,5 @@
 import pytest
+from helpers import AuthCookies
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -78,12 +79,14 @@ async def client(override_db):
 
 
 @pytest.fixture(scope="session")
-async def admin_token(client, admin_user):
+async def admin_token(client, admin_user) -> AuthCookies:
     response = await client.post(
         "/auth/token",
         data={"username": "admin", "password": "admin"},
     )
-    return response.json()["access_token"]
+    return AuthCookies(
+        session=response.cookies["session"], csrf=response.cookies["csrf_token"]
+    )
 
 
 @pytest.fixture(scope="session")
@@ -103,9 +106,11 @@ async def member_user(override_db):
 
 
 @pytest.fixture(scope="session")
-async def member_token(client, member_user):
+async def member_token(client, member_user) -> AuthCookies:
     response = await client.post(
         "/auth/token",
         data={"username": "member", "password": "member"},
     )
-    return response.json()["access_token"]
+    return AuthCookies(
+        session=response.cookies["session"], csrf=response.cookies["csrf_token"]
+    )
