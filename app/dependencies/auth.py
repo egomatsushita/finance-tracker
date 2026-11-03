@@ -1,21 +1,37 @@
+import secrets
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Cookie, Depends, Request
 from jwt.exceptions import InvalidTokenError
 
 from dependencies.database import SessionDep
-from errors.auth import CredentialError, ForbiddenError
+from errors.auth import CredentialError, CsrfError, ForbiddenError
 from errors.user import UserNotFoundError
 from schemas.auth import TokenPayload
 from schemas.user import CurrentUser, UserRoleEnum
 from services.auth import AuthService
 from services.user import UserService
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+SessionCookie = Annotated[str | None, Cookie(alias="session")]
 
-TokenDep = Annotated[str, Depends(oauth2_scheme)]
+
+def _require_session_token(session: SessionCookie = None) -> str:
+    """
+    Require the JWT from the `session` cookie.
+    Args:
+        session: The raw JWT read from the `session` cookie, if present.
+    Returns:
+        The raw JWT string.
+    Raises:
+        CredentialError: If the `session` cookie is missing.
+    """
+    if session is None:
+        raise CredentialError()
+    return session
+
+
+TokenDep = Annotated[str, Depends(_require_session_token)]
 
 
 def _decode_username(token: str) -> str:
@@ -101,3 +117,28 @@ async def verify_ownership(user_id: UUID, current_user: CurrentUserDep) -> None:
 
 
 VerifyOwnership = Depends(verify_ownership)
+
+
+async def verify_csrf(request: Request, current_user: CurrentUserDep) -> None:
+    """
+    Verify the X-CSRF-Token header matches the csrf_token cookie
+    (double-submit CSRF check for mutating requests).
+    Args:
+        request: The incoming request.
+        current_user: The authenticated caller resolved by get_current_user,
+                       required here so an unauthenticated request raises
+                       401 before this CSRF check can raise 403.
+    Raises:
+        CsrfError: If either value is missing or they don't match.
+    """
+    cookie_value = request.cookies.get("csrf_token")
+    header_value = request.headers.get("x-csrf-token")
+    if (
+        not cookie_value
+        or not header_value
+        or not secrets.compare_digest(cookie_value, header_value)
+    ):
+        raise CsrfError()
+
+
+VerifyCsrf = Depends(verify_csrf)
