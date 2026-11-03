@@ -3,7 +3,12 @@ import logging
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from errors.auth import CredentialError, ForbiddenError, NotAuthenticatedError
+from errors.auth import (
+    CredentialError,
+    CsrfError,
+    ForbiddenError,
+    NotAuthenticatedError,
+)
 from errors.database import ConflictError
 from errors.params import InvalidFilterError
 from errors.transaction import TransactionNotFoundError
@@ -27,6 +32,13 @@ def register_exception_handlers(app: FastAPI):
         logger.warning("security_forbidden method=%s path=%s", req.method, req.url.path)
         raise HTTPException(status_code=403, detail=str(exc))
 
+    @app.exception_handler(CsrfError)
+    async def csrf_error_handler(req: Request, exc: CsrfError):
+        logger.warning(
+            "security_csrf_error method=%s path=%s", req.method, req.url.path
+        )
+        raise HTTPException(status_code=403, detail=str(exc))
+
     @app.exception_handler(ConflictError)
     async def conflict_error_handler(req: Request, exc: ConflictError):
         raise HTTPException(status_code=409, detail=str(exc))
@@ -36,18 +48,14 @@ def register_exception_handlers(app: FastAPI):
         logger.warning(
             "security_credential_error method=%s path=%s", req.method, req.url.path
         )
-        raise HTTPException(
-            status_code=401, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}
-        )
+        raise HTTPException(status_code=401, detail=str(exc))
 
     @app.exception_handler(NotAuthenticatedError)
     async def not_authenticated_error_handler(req: Request, exc: NotAuthenticatedError):
         logger.warning(
             "security_not_authenticated method=%s path=%s", req.method, req.url.path
         )
-        raise HTTPException(
-            status_code=401, detail=str(exc), headers={"WWW-Authenticate": "Bearer"}
-        )
+        raise HTTPException(status_code=401, detail=str(exc))
 
     @app.exception_handler(UserNotFoundError)
     async def user_not_found_error_handler(req: Request, exc: UserNotFoundError):

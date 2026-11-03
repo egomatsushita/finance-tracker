@@ -17,9 +17,9 @@ app = FastAPI(title="Personal Finance Tracker")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["X-CSRF-Token", "Content-Type"],
 )
 
 register_exception_handlers(app)
