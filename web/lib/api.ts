@@ -2,12 +2,6 @@ import type { ApiErrorBody, LoginResponse } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
-// Token lives in localStorage, not an httpOnly cookie — an accepted tradeoff
-// for this foundation ticket (see _specs/api-client-auth-foundation.md).
-// Means any XSS can read the token; revisit if that becomes a priority
-// (would need a backend-set httpOnly cookie + CSRF token instead).
-const TOKEN_KEY = 'ft_token'
-
 export class ApiError extends Error {
   status: number
   body: ApiErrorBody
@@ -19,30 +13,20 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return window.localStorage.getItem(TOKEN_KEY)
-}
-
-export function setToken(token: string): void {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(TOKEN_KEY, token)
-}
-
-export function clearToken(): void {
-  if (typeof window === 'undefined') return
-  window.localStorage.removeItem(TOKEN_KEY)
+function readCsrfToken(): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 // Module-level dedup guard: several in-flight requests can all receive a 401
-// around the same moment (e.g. token expiry), but the clear+redirect should
-// only happen once. Reset after a fresh login starts a new session.
+// around the same moment (e.g. token expiry), but the redirect should only
+// happen once. Reset after a fresh login starts a new session.
 let unauthorizedHandled = false
 
 function handleUnauthorized(): void {
   if (unauthorizedHandled) return
   unauthorizedHandled = true
-  clearToken()
   if (typeof window !== 'undefined') {
     // Plain module, no router available here; a hard navigation is also
     // what we want — it fully resets client state after session invalidation.
@@ -63,17 +47,25 @@ async function parseErrorBody(res: Response): Promise<ApiErrorBody> {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}, skipAuthRedirect = false): Promise<T> {
-  const token = getToken()
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  skipAuthRedirect = false,
+): Promise<T> {
   const headers = new Headers(init.headers)
   if (!headers.has('Content-Type') && init.body) {
     headers.set('Content-Type', 'application/json')
   }
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+  if (init.method && init.method !== 'GET') {
+    const csrfToken = readCsrfToken()
+    if (csrfToken) headers.set('X-CSRF-Token', csrfToken)
   }
 
-  const res = await fetch(`${API_URL}${path}`, { ...init, headers })
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
 
   if (res.status === 401) {
     const body = await parseErrorBody(res)
@@ -101,7 +93,7 @@ export const api = {
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
 
-// Used by AuthProvider's mount-time hydration: a stale/garbage token should
+// Used by AuthProvider's mount-time hydration: a stale/missing session should
 // settle quietly to logged-out, not trigger a redirect (there's nothing to
 // redirect away from yet).
 export function getWithAuthHandling<T>(path: string, skipAuthRedirect: boolean): Promise<T> {
@@ -116,6 +108,7 @@ export async function loginRequest(username: string, password: string): Promise<
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
+    credentials: 'include',
   })
 
   if (!res.ok) {
@@ -124,4 +117,8 @@ export async function loginRequest(username: string, password: string): Promise<
   }
 
   return res.json()
+}
+
+export async function logoutRequest(): Promise<void> {
+  await api.post('/auth/logout')
 }
