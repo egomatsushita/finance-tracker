@@ -8,6 +8,10 @@ class Token(BaseModel):
     token_type: str
 
 
+class LoginResponse(BaseModel):
+    detail: str
+
+
 class TokenPayload(BaseModel):
     sub: str | None = None
     exp: datetime

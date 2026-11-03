@@ -15,3 +15,8 @@ class CredentialError(AuthError):
 class ForbiddenError(AuthError):
     def __init__(self):
         super().__init__("You do not have permission to perform this action.")
+
+
+class CsrfError(AuthError):
+    def __init__(self):
+        super().__init__("CSRF token missing or invalid")

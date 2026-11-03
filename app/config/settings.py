@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     access_token_expire_minute: int = 30
     log_level: str = "INFO"
     cors_origins: list[str] = ["http://localhost:3000"]
+    cookie_secure: bool = True
+    cookie_domain: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env")
 
