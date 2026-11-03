@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body
 
-from dependencies.auth import RequireAdmin
+from dependencies.auth import RequireAdmin, VerifyCsrf
 from dependencies.params import FilterParamsDep
 from dependencies.service import get_service_dep
 from docs.user import user_create_example, user_endpoints, user_update_admin_example
@@ -46,6 +46,7 @@ async def read_users(
     status_code=201,
     **user_endpoints["create"],
     response_model=UserReadSchema,
+    dependencies=[VerifyCsrf],
 )
 async def create_user(
     service: ServiceDep,
@@ -88,6 +89,7 @@ async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     status_code=200,
     **user_endpoints["update"],
     response_model=UserReadSchema,
+    dependencies=[VerifyCsrf],
 )
 async def update_user(
     user_id: UUID,
@@ -115,6 +117,7 @@ async def update_user(
     "/{user_id}",
     status_code=204,
     **user_endpoints["delete"],
+    dependencies=[VerifyCsrf],
 )
 async def delete_user(user_id: UUID, service: ServiceDep) -> None:
     """
