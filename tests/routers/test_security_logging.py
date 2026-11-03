@@ -1,5 +1,7 @@
 import logging
 
+from helpers import auth_kwargs
+
 
 class TestSecurityLogging:
     async def test_credential_error_logs_warning(self, client, caplog):
@@ -18,7 +20,7 @@ class TestSecurityLogging:
         with caplog.at_level(logging.WARNING, logger="exception_handlers"):
             response = await client.get(
                 "/admin/users/",
-                headers={"Authorization": f"Bearer {member_token}"},
+                **auth_kwargs(member_token),
             )
         assert response.status_code == 403
         assert any(
@@ -31,10 +33,9 @@ class TestSecurityLogging:
         with caplog.at_level(logging.WARNING, logger="exception_handlers"):
             response = await client.get(
                 "/admin/users/",
-                headers={"Authorization": f"Bearer {bad_token}"},
+                cookies={"session": bad_token},
             )
         assert response.status_code == 401
         for r in caplog.records:
             if r.levelno == logging.WARNING:
                 assert bad_token not in r.message
-                assert "Bearer" not in r.message
