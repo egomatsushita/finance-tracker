@@ -23,12 +23,12 @@ class TestCors:
             headers={
                 "Origin": "http://localhost:3000",
                 "Access-Control-Request-Method": "POST",
-                "Access-Control-Request-Headers": "authorization,content-type",
+                "Access-Control-Request-Headers": "x-csrf-token,content-type",
             },
         )
         assert response.status_code == 200
         allow_methods = response.headers["access-control-allow-methods"]
         assert "POST" in allow_methods
         allow_headers = response.headers["access-control-allow-headers"].lower()
-        assert "authorization" in allow_headers
+        assert "x-csrf-token" in allow_headers
         assert "content-type" in allow_headers
