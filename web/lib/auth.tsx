@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loginRequest(username, password)
     resetUnauthorizedGuard()
     const hydratedUser = await hydrate()
+    if (hydratedUser === null) {
+      throw new Error('Login succeeded but failed to load user profile')
+    }
     setUser(hydratedUser)
   }, [])
 
