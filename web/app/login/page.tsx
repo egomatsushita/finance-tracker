@@ -64,7 +64,11 @@ export default function LoginPage() {
               error={errors.password?.message}
               {...register('password')}
             />
-            {formError && <p className="text-sm text-expense">{formError}</p>}
+            {formError && (
+              <p role="alert" className="text-sm text-expense">
+                {formError}
+              </p>
+            )}
             <Button type="submit" isLoading={isSubmitting} className="mt-2">
               Sign in
             </Button>
