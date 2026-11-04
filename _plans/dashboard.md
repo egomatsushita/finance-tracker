@@ -138,8 +138,9 @@ web/
 ---
 
 ## Running locally
-- Backend: `uv run app/main.py` (http://127.0.0.1:8000), with `cors_origins` including `http://localhost:3000`.
+- Backend: `uv run app/main.py` (binds `127.0.0.1:8000`), with `cors_origins` including `http://localhost:3000`.
 - Frontend: `web/` → `npm install` then `npm run dev` (http://localhost:3000).
+- **`NEXT_PUBLIC_API_URL` must be `http://localhost:8000`, not `http://127.0.0.1:8000`.** The auth cookie is `SameSite=Lax`; `localhost` and `127.0.0.1` are different *sites* to the browser even though both resolve to the loopback interface, so a `127.0.0.1` API URL makes every `fetch` cross-site and the browser withholds the cookie — login appears to succeed (`/auth/token` sets it fine) but every subsequent authed call 401s. Keep both frontend and backend on the `localhost` hostname locally.
 - Optionally extend the existing `docker-compose` to add the `web` service (follow-up, not required for first delivery).
 
 ## Verification (end-to-end)
