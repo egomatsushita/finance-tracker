@@ -1,9 +1,10 @@
+from helpers import AuthCookies, auth_kwargs
 from httpx import AsyncClient
 
 
 async def _create_transaction(
     client: AsyncClient,
-    token: str,
+    token: AuthCookies,
     amount: str,
     kind: str,
     category: str,
@@ -17,7 +18,7 @@ async def _create_transaction(
             "category": category,
             "transaction_date": transaction_date,
         },
-        headers={"Authorization": f"Bearer {token}"},
+        **auth_kwargs(token, csrf=True),
     )
     assert response.status_code == 201
     return response.json()
@@ -25,11 +26,11 @@ async def _create_transaction(
 
 class TestTransactionSummary:
     async def test_summary_empty_for_new_user(
-        self, client: AsyncClient, member_token: str
+        self, client: AsyncClient, member_token: AuthCookies
     ):
         response = await client.get(
             "/transactions/summary",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 200
         body = response.json()
@@ -39,7 +40,9 @@ class TestTransactionSummary:
         assert body["by_category"] == []
         assert body["by_month"] == []
 
-    async def test_summary_totals_and_net(self, client: AsyncClient, member_token: str):
+    async def test_summary_totals_and_net(
+        self, client: AsyncClient, member_token: AuthCookies
+    ):
         await _create_transaction(
             client,
             member_token,
@@ -59,7 +62,7 @@ class TestTransactionSummary:
 
         response = await client.get(
             "/transactions/summary",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 200
         body = response.json()
@@ -68,7 +71,7 @@ class TestTransactionSummary:
         assert body["net"] == "1300.00"
 
     async def test_summary_by_category_groups_correctly(
-        self, client: AsyncClient, member_token: str
+        self, client: AsyncClient, member_token: AuthCookies
     ):
         await _create_transaction(
             client,
@@ -99,7 +102,7 @@ class TestTransactionSummary:
             "/transactions/summary"
             "?transaction_date_from=2026-06-01T00:00:00Z"
             "&transaction_date_to=2026-06-30T23:59:59Z",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 200
         by_category = {
@@ -110,7 +113,7 @@ class TestTransactionSummary:
         assert by_category[("expense", "transport")] == "40.00"
 
     async def test_summary_by_month_groups_correctly(
-        self, client: AsyncClient, member_token: str
+        self, client: AsyncClient, member_token: AuthCookies
     ):
         await _create_transaction(
             client,
@@ -141,7 +144,7 @@ class TestTransactionSummary:
             "/transactions/summary"
             "?transaction_date_from=2026-07-01T00:00:00Z"
             "&transaction_date_to=2026-08-31T23:59:59Z",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 200
         by_month = {entry["month"]: entry for entry in response.json()["by_month"]}
@@ -151,7 +154,7 @@ class TestTransactionSummary:
         assert by_month["2026-08"]["expense"] == "0.00"
 
     async def test_summary_date_range_filter(
-        self, client: AsyncClient, member_token: str
+        self, client: AsyncClient, member_token: AuthCookies
     ):
         await _create_transaction(
             client,
@@ -174,25 +177,25 @@ class TestTransactionSummary:
             "/transactions/summary"
             "?transaction_date_from=2026-09-01T00:00:00Z"
             "&transaction_date_to=2026-09-30T23:59:59Z",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 200
         body = response.json()
         assert body["total_income"] == "500.00"
 
     async def test_summary_invalid_date_range(
-        self, client: AsyncClient, member_token: str
+        self, client: AsyncClient, member_token: AuthCookies
     ):
         response = await client.get(
             "/transactions/summary"
             "?transaction_date_from=2026-02-01T00:00:00Z"
             "&transaction_date_to=2026-01-01T00:00:00Z",
-            headers={"Authorization": f"Bearer {member_token}"},
+            **auth_kwargs(member_token),
         )
         assert response.status_code == 422
 
     async def test_summary_scoped_to_own_user(
-        self, client: AsyncClient, member_token: str, admin_token: str
+        self, client: AsyncClient, member_token: AuthCookies, admin_token: AuthCookies
     ):
         await _create_transaction(
             client,
@@ -205,7 +208,7 @@ class TestTransactionSummary:
 
         response = await client.get(
             "/transactions/summary",
-            headers={"Authorization": f"Bearer {admin_token}"},
+            **auth_kwargs(admin_token),
         )
         assert response.status_code == 200
         body = response.json()

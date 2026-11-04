@@ -34,7 +34,7 @@ default-groups = ["dev", "test"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
-pythonpath = ["app"]
+pythonpath = ["app", "tests"]
 
 [tool.ruff]
 line-length = 88

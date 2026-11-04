@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body
 
-from dependencies.auth import CurrentUserDep, VerifyOwnership
+from dependencies.auth import CurrentUserDep, VerifyCsrf, VerifyOwnership
 from dependencies.service import get_service_dep
 from docs.user import user_endpoints, user_update_self_example
 from schemas.user import UserReadSchema, UserUpdateSelfSchema
@@ -51,7 +51,7 @@ async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     status_code=200,
     **user_endpoints["update"],
     response_model=UserReadSchema,
-    dependencies=[VerifyOwnership],
+    dependencies=[VerifyOwnership, VerifyCsrf],
 )
 async def update_user(
     user_id: UUID,

@@ -1,30 +1,22 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { ApiError, clearToken, getToken, getWithAuthHandling, loginRequest, resetUnauthorizedGuard, setToken } from './api'
+import { getWithAuthHandling, loginRequest, logoutRequest, resetUnauthorizedGuard } from './api'
 import type { User } from './types'
 
 type AuthContextValue = {
-  user: User | null;
-  loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-};
+  user: User | null
+  loading: boolean
+  login: (username: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+}
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 async function hydrate(): Promise<User | null> {
-  const token = getToken()
-  if (!token) return null
   try {
     return await getWithAuthHandling<User>('/users/me', true)
-  } catch (err) {
-    // Only a confirmed 401 means the token is actually invalid. A transient
-    // network/server failure must not wipe a token that's still good —
-    // otherwise a blip during hydration forces a real re-login.
-    if (err instanceof ApiError && err.status === 401) {
-      clearToken()
-    }
+  } catch {
     return null
   }
 }
@@ -47,15 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback(async (username: string, password: string) => {
-    const { access_token } = await loginRequest(username, password)
-    setToken(access_token)
+    await loginRequest(username, password)
     resetUnauthorizedGuard()
     const hydratedUser = await hydrate()
     setUser(hydratedUser)
   }, [])
 
-  const logout = useCallback(() => {
-    clearToken()
+  const logout = useCallback(async () => {
+    await logoutRequest()
     setUser(null)
   }, [])
 

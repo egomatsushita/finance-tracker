@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Response
 
-from dependencies.auth import CurrentUserDep
+from dependencies.auth import CurrentUserDep, VerifyCsrf
 from dependencies.params import (
     TransactionFilterParamsDep,
     TransactionSummaryFilterParamsDep,
@@ -48,6 +48,7 @@ async def read_transactions(
     status_code=201,
     **transaction_endpoints["create"],
     response_model=TransactionReadSchema,
+    dependencies=[VerifyCsrf],
 )
 async def create_transaction(
     service: ServiceDep,
@@ -102,6 +103,7 @@ async def read_transaction(
     status_code=200,
     **transaction_endpoints["update"],
     response_model=TransactionReadSchema,
+    dependencies=[VerifyCsrf],
 )
 async def update_transaction(
     transaction_id: int,
@@ -122,6 +124,7 @@ async def update_transaction(
     status_code=204,
     **transaction_endpoints["delete"],
     response_model=None,
+    dependencies=[VerifyCsrf],
 )
 async def delete_transaction(
     transaction_id: int,
