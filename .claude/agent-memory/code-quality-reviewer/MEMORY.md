@@ -4,4 +4,4 @@
 - [httpOnly cookie + CSRF migration (FT-43)](project_httponly_cookie_csrf.md) — double-submit CSRF design verified sound; logout-without-valid-cookie and frontend logout try/finally are the residual gaps
 - [Transaction model/repo/schema patterns](project_transaction_patterns.md) — duplicate method defs, text() injection risk, user_id IDOR gap, update validator blind spot, missing amount sign constraint
 - [Logging implementation patterns](project_logging_patterns.md) — lazy %s formatting required, logger below imports, ownership-based idempotency guard, sensitive field filtering pattern
-- [Web frontend patterns (FT-35)](project_web_frontend_patterns.md) — Next.js API client/auth foundation: localStorage JWT, dedup 401 redirect, hydrate() over-broad error handling
+- [Web frontend patterns (FT-35/36/43)](project_web_frontend_patterns.md) — auth now cookie-based (not localStorage, see FT-43); FT-36 adds login page + ui/ primitives, a11y gaps noted

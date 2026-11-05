@@ -13,10 +13,10 @@ Goal: a member can log in, view a financial overview, and manage their transacti
 ## API facts the frontend is built against
 
 - **Base URL:** `http://127.0.0.1:8000` (`UVICORN_HOST`/`UVICORN_PORT`).
-- **Login:** `POST /auth/token`, **form-encoded** (`username`, `password`), returns `{ access_token, token_type: "bearer" }`. HS256, ~30 min, **no refresh token** → handle 401 by redirecting to login.
-- **Auth header:** `Authorization: Bearer <token>`.
+- **Login:** `POST /auth/token`, **form-encoded** (`username`, `password`), returns `{ detail: "ok" }` and sets an httpOnly `session` cookie plus a readable `csrf_token` cookie (as of FT-43). HS256, ~30 min, **no refresh token** → handle 401 by redirecting to login.
+- **Auth model:** cookie-based, not a bearer header. Every request sends `credentials: 'include'`; every mutating request (`POST`/`PUT`/`PATCH`/`DELETE`) attaches `X-CSRF-Token` read from the `csrf_token` cookie (double-submit check against the server-side cookie). `POST /auth/logout` (requires CSRF) clears both cookies.
 - **Users:** `/admin/users/` (admin only — GET list w/ `offset`/`limit`/`order_by`, POST, and `/{user_id}` GET/PUT/DELETE); `/users/{user_id}` (self GET/PUT). Roles: `admin`, `member`. Read shape: `id, username, email, is_active, role, created_at, updated_at`.
-- **Transactions:** `/transactions/` CRUD (GET list, POST, `/{id}` GET/PATCH/DELETE), auto-scoped to the token's user. Filters: `kind` (`income`/`expense`), `category`, `transaction_date_from`/`_to`, `offset`, `limit` (max 100), `order_by`. Read shape: `amount (Decimal), kind, category, description, transaction_date, id, user_id, created_at, updated_at`. **No `currency` field; no total-count in list responses.**
+- **Transactions:** `/transactions/` CRUD (GET list, POST, `/{id}` GET/PATCH/DELETE), auto-scoped to the session's user. Filters: `kind` (`income`/`expense`), `category`, `transaction_date_from`/`_to`, `offset`, `limit` (max 100), `order_by`. Read shape: `amount (Decimal), kind, category, description, transaction_date, id, user_id, created_at, updated_at`. **No `currency` field; no total-count in list responses.**
 - **Categories (Pydantic-enforced):** income → `salary, investment, rental, gift, other`; expense → `housing, utilities, groceries, transport, health, entertainment, education, clothing, travel, savings, other`.
 
 ---
@@ -28,7 +28,7 @@ These are the smallest changes needed to make a browser dashboard function. Each
 ### A1. CORS middleware (mandatory — browser is blocked without it)
 - Add `CORSMiddleware` in `app/main.py`.
 - Add a `cors_origins: list[str]` setting to `app/config/settings.py` (+ `.env.example`), default `["http://localhost:3000"]`.
-- Allow credentials off (we use bearer header, not cookies), allow methods `GET/POST/PUT/PATCH/DELETE/OPTIONS`, allow `Authorization`/`Content-Type` headers.
+- Allow credentials off (we use bearer header, not cookies), allow methods `GET/POST/PUT/PATCH/DELETE/OPTIONS`, allow `Authorization`/`Content-Type` headers. **Superseded by FT-43:** auth moved to httpOnly cookies, so CORS now allows credentials and `X-CSRF-Token`/`Content-Type` instead (see the updated API facts above).
 
 ### A2. Current-user endpoint (mandatory — frontend can't otherwise learn its id/role)
 - Add `GET /users/me` → returns `UserReadSchema` for the authenticated user.
@@ -105,8 +105,8 @@ web/
     charts/                   # KPI cards, bar/donut (Recharts)
     transactions/ users/      # resource-specific forms + rows
   lib/
-    api.ts                    # typed fetch wrapper (Bearer, 401 -> logout)
-    auth.tsx                  # AuthProvider/useAuth (token + current user)
+    api.ts                    # typed fetch wrapper (cookie creds + CSRF header, 401 -> logout)
+    auth.tsx                  # AuthProvider/useAuth (session cookie + current user)
     queries.ts                # React Query hooks per resource
     format.ts                 # money/date/category formatting + category enums
     types.ts                  # TS types mirroring API schemas
@@ -116,9 +116,11 @@ web/
 ### Dependencies (kept lean)
 `next`, `react`, `typescript`, `tailwindcss` v4, `@tanstack/react-query` (clean auth'd data/caching/mutations for 2 resources), `react-hook-form` + `zod` (forms mirroring backend validation incl. kind↔category rules), `recharts` (overview charts), `lucide-react` (icons). No component library — small hand-built `ui/` primitives keep it minimal and on-brand.
 
+**Testing (Vitest + React Testing Library):** TDD from FT-36 onward — write the failing test before the component/hook it covers. Scope tests to behavior that would actually break silently: form validation, auth state transitions, conditional rendering (role-gated nav, loading/error states), not implementation details or trivial prop pass-through. `npm run test` runs the suite; CI/lint gates follow the same "must be clean before commit" rule as `npm run build`/`lint`.
+
 ### Auth flow
-- `lib/api.ts`: base wrapper reading `NEXT_PUBLIC_API_URL`; attaches `Authorization: Bearer`; on `401` clears token and redirects to `/login`. Login uses `application/x-www-form-urlencoded` against `POST /auth/token`.
-- `AuthProvider`: stores token in `localStorage` (bearer model; note the XSS tradeoff vs httpOnly cookies — acceptable for this local/demo dashboard), fetches `GET /users/me` on load to hydrate `{ id, role, ... }`, exposes `login`/`logout`/`user`.
+- `lib/api.ts`: base wrapper reading `NEXT_PUBLIC_API_URL`; sends `credentials: 'include'` on every request and attaches `X-CSRF-Token` (read from the `csrf_token` cookie) on mutating requests; on `401` redirects to `/login` (deduped across concurrent requests). Login uses `application/x-www-form-urlencoded` against `POST /auth/token`.
+- `AuthProvider`: no client-side token — the httpOnly `session` cookie is invisible to JS (closes the XSS-token-theft tradeoff noted in earlier drafts of this plan; see FT-43). Fetches `GET /users/me` on load to hydrate `{ id, role, ... }`, exposes `login`/`logout`/`user`. `logout()` calls `POST /auth/logout` to clear both cookies server-side.
 - `(app)/layout.tsx` redirects unauthenticated users to `/login`; `/users` route guarded to `role === "admin"` (hidden from nav + redirect for members).
 
 ### Pages
@@ -136,15 +138,18 @@ web/
 ---
 
 ## Running locally
-- Backend: `uv run app/main.py` (http://127.0.0.1:8000), with `cors_origins` including `http://localhost:3000`.
+- Backend: `uv run app/main.py` (binds `127.0.0.1:8000`), with `cors_origins` including `http://localhost:3000`.
 - Frontend: `web/` → `npm install` then `npm run dev` (http://localhost:3000).
+- **`NEXT_PUBLIC_API_URL` must be `http://localhost:8000`, not `http://127.0.0.1:8000`.** The auth cookie is `SameSite=Lax`; `localhost` and `127.0.0.1` are different *sites* to the browser even though both resolve to the loopback interface, so a `127.0.0.1` API URL makes every `fetch` cross-site and the browser withholds the cookie — login appears to succeed (`/auth/token` sets it fine) but every subsequent authed call 401s. Keep both frontend and backend on the `localhost` hostname locally.
 - Optionally extend the existing `docker-compose` to add the `web` service (follow-up, not required for first delivery).
 
 ## Verification (end-to-end)
 1. Add CORS + `/users/me` + `/transactions/summary`; add pytest tests for the two new endpoints (`uv run pytest tests/routers/...`) — run when you ask.
 2. Seed/create an admin and a member user (admin via `/admin/users`, or existing seed migration).
-3. Start both servers. In the browser: log in as member → Overview shows summary numbers and charts; create/edit/filter/delete a transaction and confirm the overview updates; edit profile. Log in as admin → Users page CRUD works and the Users nav is hidden for members. Confirm 401 (expired token) redirects to login, and mobile layout (sidebar → drawer) is usable.
+3. Start both servers. In the browser: log in as member → Overview shows summary numbers and charts; create/edit/filter/delete a transaction and confirm the overview updates; edit profile. Log in as admin → Users page CRUD works and the Users nav is hidden for members. Confirm 401 (expired session) redirects to login, and mobile layout (sidebar → drawer) is usable.
 4. Check accessibility basics: keyboard focus visible, contrast, reduced-motion.
 
 ## Out of scope (can follow up)
-Refresh tokens, `X-Total-Count`/true pagination totals, httpOnly-cookie auth, CSV export, multi-currency, SSR of authed data, e2e test harness, dockerizing the web service.
+Refresh tokens, `X-Total-Count`/true pagination totals, CSV export, multi-currency, SSR of authed data, e2e test harness, dockerizing the web service.
+
+(httpOnly-cookie auth was originally listed here as a future item — it shipped in FT-43 and is reflected throughout this plan now.)

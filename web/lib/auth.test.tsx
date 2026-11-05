@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider, useAuth } from './auth'
@@ -27,11 +28,20 @@ vi.mock('./api', () => ({
 
 function Probe() {
   const { user, loading, login, logout } = useAuth()
+  const [loginError, setLoginError] = useState<string | null>(null)
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
       <span data-testid="user">{user ? user.username : 'none'}</span>
-      <button onClick={() => login('member', 'member')}>login</button>
+      <span data-testid="login-error">{loginError ?? ''}</span>
+      <button
+        onClick={() => {
+          setLoginError(null)
+          login('member', 'member').catch((err: Error) => setLoginError(err.message))
+        }}
+      >
+        login
+      </button>
       <button onClick={() => logout()}>logout</button>
     </div>
   )
@@ -84,6 +94,22 @@ describe('AuthProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('member'))
     expect(window.localStorage.setItem).not.toHaveBeenCalled()
+  })
+
+  it('login rejects when post-login hydration fails, leaving user logged out', async () => {
+    getWithAuthHandling.mockResolvedValue(null)
+    loginRequest.mockResolvedValue({ detail: 'ok' })
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'))
+
+    screen.getByText('login').click()
+
+    await waitFor(() => expect(screen.getByTestId('login-error').textContent).not.toBe(''))
+    expect(screen.getByTestId('user').textContent).toBe('none')
   })
 
   it('logout calls logoutRequest and clears the user', async () => {
