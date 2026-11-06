@@ -61,7 +61,6 @@ async def admin_user(override_db):
             username="admin",
             email="admin@example.com",
             hashed_password=AuthService.create_hashed_password("admin"),
-            role="admin",
             is_active=True,
         )
         session.add(user)
@@ -96,7 +95,6 @@ async def member_user(override_db):
             username="member",
             email="member@example.com",
             hashed_password=AuthService.create_hashed_password("member"),
-            role="member",
             is_active=True,
         )
         session.add(user)

@@ -38,7 +38,7 @@ async def test_login_unknown_user(client: AsyncClient):
 
 async def test_invalid_token(client: AsyncClient):
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": "not-a-valid-token"},
     )
     assert response.status_code == 401
@@ -49,7 +49,7 @@ async def test_expired_token(client: AsyncClient):
         {"sub": "admin", "exp": datetime(2000, 1, 1, tzinfo=timezone.utc)}
     )
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": token},
     )
     assert response.status_code == 401
@@ -58,14 +58,14 @@ async def test_expired_token(client: AsyncClient):
 async def test_token_missing_sub(client: AsyncClient):
     token = AuthService.encode_jwt({"exp": datetime(2100, 1, 1, tzinfo=timezone.utc)})
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": token},
     )
     assert response.status_code == 401
 
 
 async def test_missing_session_cookie(client: AsyncClient):
-    response = await client.get("/admin/users/")
+    response = await client.get("/users/me")
     assert response.status_code == 401
 
 

@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from errors.user import UserAlreadyExistError, UserNotFoundError
-from schemas.user import UserCreateSchema, UserUpdateAdminSchema
+from schemas.user import UserCreateSchema, UserUpdateSelfSchema
 from services.user import UserService
 
 
@@ -55,19 +55,13 @@ class TestCreate:
 class TestUpdate:
     async def test_applies_partial_fields(self, service, created_user):
         uid = str(uuid4())[:8]
-        data = UserUpdateAdminSchema(username=f"updated_{uid}")
+        data = UserUpdateSelfSchema(username=f"updated_{uid}")
         result = await service.update(created_user.id, data)
         assert result.username == f"updated_{uid}"
 
     async def test_raises_for_nonexistent(self, service):
         with pytest.raises(UserNotFoundError):
-            await service.update(uuid4(), UserUpdateAdminSchema(username="x"))
-
-
-class TestDelete:
-    async def test_raises_for_nonexistent(self, service):
-        with pytest.raises(UserNotFoundError):
-            await service.delete(uuid4())
+            await service.update(uuid4(), UserUpdateSelfSchema(username="x"))
 
 
 class TestLogging:
@@ -90,18 +84,10 @@ class TestLogging:
     ):
         uid = str(uuid4())[:8]
         new_username = f"renamed_{uid}"
-        data = UserUpdateAdminSchema(username=new_username)
+        data = UserUpdateSelfSchema(username=new_username)
         with caplog.at_level(logging.INFO, logger="services.user"):
             await service.update(created_user.id, data)
         record = next((r for r in caplog.records if "user_updated" in r.message), None)
         assert record is not None
         assert "username" in record.message
         assert new_username not in record.message
-
-    async def test_delete_emits_info(self, service, created_user, caplog):
-        with caplog.at_level(logging.INFO, logger="services.user"):
-            await service.delete(created_user.id)
-        assert any(
-            "user_deleted" in r.message and str(created_user.id) in r.message
-            for r in caplog.records
-        )

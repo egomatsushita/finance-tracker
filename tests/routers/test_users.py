@@ -4,14 +4,6 @@ from helpers import AuthCookies, auth_kwargs
 from httpx import AsyncClient
 
 
-async def test_get_user_not_found(client: AsyncClient, admin_token: AuthCookies):
-    response = await client.get(
-        f"/users/{uuid4()}",
-        **auth_kwargs(admin_token),
-    )
-    assert response.status_code == 404
-
-
 async def test_get_user_unauthenticated(client: AsyncClient):
     response = await client.get(f"/users/{uuid4()}")
     assert response.status_code == 401
@@ -58,17 +50,6 @@ async def test_member_cannot_update_other_user(
         **auth_kwargs(member_token, csrf=True),
     )
     assert response.status_code == 403
-
-
-async def test_member_cannot_self_escalate_role(
-    client: AsyncClient, member_token: AuthCookies, member_user
-):
-    response = await client.put(
-        f"/users/{member_user.id}",
-        json={"role": "admin"},
-        **auth_kwargs(member_token, csrf=True),
-    )
-    assert response.status_code == 422
 
 
 async def test_member_cannot_send_is_active(
