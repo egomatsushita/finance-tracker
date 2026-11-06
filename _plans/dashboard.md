@@ -4,7 +4,7 @@
 
 The Finance Tracker FastAPI backend exposes JWT-authenticated REST endpoints for **users** and **transactions**, but has no UI. We're building a clean, professional, responsive web dashboard that showcases both resources. The dashboard doubles as a demo/portfolio surface, so it must look deliberately designed (finance-industry palette + typography) while staying minimal and not over-engineered.
 
-Goal: a member can log in, view a financial overview, and manage their transactions and profile; an admin can additionally manage users — all against the existing API with the smallest possible backend additions.
+Goal: a user can sign up, log in, view a financial overview, and manage their transactions and profile — all against the existing API with the smallest possible backend additions.
 
 **Stack (confirmed):** Next.js (App Router) + TypeScript + Tailwind v4, living in a new `web/` directory in this repo. Data aggregates come from a new backend summary endpoint.
 
@@ -15,7 +15,7 @@ Goal: a member can log in, view a financial overview, and manage their transacti
 - **Base URL:** `http://127.0.0.1:8000` (`UVICORN_HOST`/`UVICORN_PORT`).
 - **Login:** `POST /auth/token`, **form-encoded** (`username`, `password`), returns `{ detail: "ok" }` and sets an httpOnly `session` cookie plus a readable `csrf_token` cookie (as of FT-43). HS256, ~30 min, **no refresh token** → handle 401 by redirecting to login.
 - **Auth model:** cookie-based, not a bearer header. Every request sends `credentials: 'include'`; every mutating request (`POST`/`PUT`/`PATCH`/`DELETE`) attaches `X-CSRF-Token` read from the `csrf_token` cookie (double-submit check against the server-side cookie). `POST /auth/logout` (requires CSRF) clears both cookies.
-- **Users:** `/admin/users/` (admin only — GET list w/ `offset`/`limit`/`order_by`, POST, and `/{user_id}` GET/PUT/DELETE); `/users/{user_id}` (self GET/PUT). Roles: `admin`, `member`. Read shape: `id, username, email, is_active, role, created_at, updated_at`.
+- **Users:** `POST /auth/signup` (public, creates an account and logs in); `/users/{user_id}` (self GET/PUT only — no role system, no admin user management). Read shape: `id, username, email, is_active, created_at, updated_at`.
 - **Transactions:** `/transactions/` CRUD (GET list, POST, `/{id}` GET/PATCH/DELETE), auto-scoped to the session's user. Filters: `kind` (`income`/`expense`), `category`, `transaction_date_from`/`_to`, `offset`, `limit` (max 100), `order_by`. Read shape: `amount (Decimal), kind, category, description, transaction_date, id, user_id, created_at, updated_at`. **No `currency` field; no total-count in list responses.**
 - **Categories (Pydantic-enforced):** income → `salary, investment, rental, gift, other`; expense → `housing, utilities, groceries, transport, health, entertainment, education, clothing, travel, savings, other`.
 
@@ -79,7 +79,7 @@ Semantic income/expense colors double as the categorical chart palette; for char
 - Avoid skill "tells": no ALL-CAPS eyebrow labels, no single-word italic emphasis, no `→` on buttons, no middle-dot metadata, sentence case throughout.
 
 ### Layout & interaction
-- Persistent left sidebar nav (collapses to a top bar / drawer on mobile), role-aware: members see Overview, Transactions, Profile; admins additionally see Users.
+- Persistent left sidebar nav (collapses to a top bar / drawer on mobile), same for every signed-in user: Overview, Transactions, Profile. No role system, no admin-only nav.
 - One orchestrated load state per page (skeletons), not scattered fade-ins. Visible keyboard focus, `prefers-reduced-motion` respected, mobile-first responsive.
 - Icons: `lucide-react` (SVG), never emoji.
 
@@ -94,11 +94,11 @@ web/
   app/
     layout.tsx                # fonts, Providers (auth + React Query), theme
     login/page.tsx            # public login
+    signup/page.tsx           # public signup (self-service account creation)
     (app)/                    # authed group, guarded by layout
       layout.tsx              # auth guard + sidebar shell
       page.tsx                # Overview (dashboard home)
       transactions/page.tsx   # transactions table + filters + CRUD
-      users/page.tsx          # admin-only users table + CRUD
       profile/page.tsx        # self profile view/edit
   components/
     ui/                       # Button, Input, Select, Modal, Table, Card, Badge, Skeleton
@@ -120,14 +120,14 @@ web/
 
 ### Auth flow
 - `lib/api.ts`: base wrapper reading `NEXT_PUBLIC_API_URL`; sends `credentials: 'include'` on every request and attaches `X-CSRF-Token` (read from the `csrf_token` cookie) on mutating requests; on `401` redirects to `/login` (deduped across concurrent requests). Login uses `application/x-www-form-urlencoded` against `POST /auth/token`.
-- `AuthProvider`: no client-side token — the httpOnly `session` cookie is invisible to JS (closes the XSS-token-theft tradeoff noted in earlier drafts of this plan; see FT-43). Fetches `GET /users/me` on load to hydrate `{ id, role, ... }`, exposes `login`/`logout`/`user`. `logout()` calls `POST /auth/logout` to clear both cookies server-side.
-- `(app)/layout.tsx` redirects unauthenticated users to `/login`; `/users` route guarded to `role === "admin"` (hidden from nav + redirect for members).
+- `AuthProvider`: no client-side token — the httpOnly `session` cookie is invisible to JS (closes the XSS-token-theft tradeoff noted in earlier drafts of this plan; see FT-43). Fetches `GET /users/me` on load to hydrate `{ id, ... }`, exposes `login`/`signup`/`logout`/`user`. `logout()` calls `POST /auth/logout` to clear both cookies server-side.
+- `(app)/layout.tsx` redirects unauthenticated users to `/login`. No role-gated routes — every signed-in user sees the same nav.
 
 ### Pages
-1. **Login** — centered card, product mark, the one gold-accented element. Username/password, inline error ("Incorrect username or password") on 401, active-voice "Sign in".
-2. **Overview** — KPI row (Net balance in signature gold+mono, Income, Expense) from `GET /transactions/summary`; a bar/area chart of income-vs-expense by month and a donut/bar of expense-by-category (dataviz-skill palette); a "Recent transactions" list (last ~5). Inviting empty states.
-3. **Transactions** — filter bar (kind, category dependent on kind, date range), sortable via `order_by`, offset/limit pagination (next/prev by page fullness). Create/Edit in a modal with `react-hook-form`+`zod` enforcing `amount > 0` and valid category-for-kind; delete with confirm. Income green / expense red badges.
-4. **Users (admin only)** — table (username, email, role, active, created) with `offset`/`limit`/`order_by`; create/edit modal (`UserCreateSchema`/`UserUpdateAdminSchema` incl. role + is_active + password); delete with confirm. Surfaces 409 conflicts (duplicate username/email) and 403 cleanly.
+1. **Login** — centered card, product mark, the one gold-accented element. Username/password, inline error ("Incorrect username or password") on 401, active-voice "Sign in", link to `/signup`.
+2. **Signup** — same visual treatment as login. Username/email/password, inline error on `409` (duplicate username/email), active-voice "Sign up", link to `/login`. Succeeds into an authenticated session (signup auto-logs in).
+3. **Overview** — KPI row (Net balance in signature gold+mono, Income, Expense) from `GET /transactions/summary`; a bar/area chart of income-vs-expense by month and a donut/bar of expense-by-category (dataviz-skill palette); a "Recent transactions" list (last ~5). Inviting empty states.
+4. **Transactions** — filter bar (kind, category dependent on kind, date range), sortable via `order_by`, offset/limit pagination (next/prev by page fullness). Create/Edit in a modal with `react-hook-form`+`zod` enforcing `amount > 0` and valid category-for-kind; delete with confirm. Income green / expense red badges.
 5. **Profile** — view/edit own record via `GET`/`PUT /users/{id}` using the id from auth context; `UserUpdateSelfSchema` fields only (username, email, password) — no role/is_active.
 
 ### Cross-cutting
@@ -145,8 +145,8 @@ web/
 
 ## Verification (end-to-end)
 1. Add CORS + `/users/me` + `/transactions/summary`; add pytest tests for the two new endpoints (`uv run pytest tests/routers/...`) — run when you ask.
-2. Seed/create an admin and a member user (admin via `/admin/users`, or existing seed migration).
-3. Start both servers. In the browser: log in as member → Overview shows summary numbers and charts; create/edit/filter/delete a transaction and confirm the overview updates; edit profile. Log in as admin → Users page CRUD works and the Users nav is hidden for members. Confirm 401 (expired session) redirects to login, and mobile layout (sidebar → drawer) is usable.
+2. Create a user via `/signup`, or use an existing seed-migration user.
+3. Start both servers. In the browser: sign up (or log in) → Overview shows summary numbers and charts; create/edit/filter/delete a transaction and confirm the overview updates; edit profile. Confirm 401 (expired session) redirects to login, and mobile layout (sidebar → drawer) is usable.
 4. Check accessibility basics: keyboard focus visible, contrast, reduced-motion.
 
 ## Out of scope (can follow up)
