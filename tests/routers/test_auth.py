@@ -132,6 +132,59 @@ async def test_csrf_mismatched_header_rejected(
     assert response.status_code == 403
 
 
+async def test_signup_valid(client: AsyncClient):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "newbie",
+            "email": "newbie@example.com",
+            "password": "newbiepassword",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"detail": "ok"}
+
+    session_cookie = next(c for c in response.cookies.jar if c.name == "session")
+    csrf_cookie = next(c for c in response.cookies.jar if c.name == "csrf_token")
+    assert session_cookie.has_nonstandard_attr("HttpOnly")
+    assert not csrf_cookie.has_nonstandard_attr("HttpOnly")
+
+    me_response = await client.get(
+        "/users/me", cookies={"session": session_cookie.value}
+    )
+    assert me_response.status_code == 200
+    assert me_response.json()["username"] == "newbie"
+
+
+async def test_signup_duplicate_username(client: AsyncClient, member_user):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "member",
+            "email": "someoneelse@example.com",
+            "password": "password",
+        },
+    )
+    assert response.status_code == 409
+
+
+async def test_signup_duplicate_email(client: AsyncClient, member_user):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "someoneelse",
+            "email": "member@example.com",
+            "password": "password",
+        },
+    )
+    assert response.status_code == 409
+
+
+async def test_signup_missing_fields(client: AsyncClient):
+    response = await client.post("/auth/signup", json={"username": "incomplete"})
+    assert response.status_code == 422
+
+
 async def test_csrf_valid_header_accepted(
     client: AsyncClient, member_token: AuthCookies
 ):

@@ -16,7 +16,9 @@ class UserCreateHashSchema(UserBase):
     hashed_password: str
 
 
-class UserCreateSchema(UserBase):
+class UserSignupSchema(Base):
+    username: str
+    email: EmailStr
     password: str
 
 

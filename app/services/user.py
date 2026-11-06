@@ -8,8 +8,8 @@ from errors.user import UserAlreadyExistError, UserNotFoundError
 from repositories.user import UserRepository
 from schemas.user import (
     UserCreateHashSchema,
-    UserCreateSchema,
     UserReadSchema,
+    UserSignupSchema,
     UserUpdateHashSchema,
     UserUpdateSelfSchema,
 )
@@ -57,7 +57,7 @@ class UserService:
 
         return UserReadSchema.model_validate(user)
 
-    async def create(self, user_data: UserCreateSchema) -> UserReadSchema:
+    async def create(self, user_data: UserSignupSchema) -> UserReadSchema:
         """
         Create a new user, hashing the plain-text password before storage.
         Args:

@@ -1,3 +1,9 @@
+user_signup_example = {
+    "username": "john-doe",
+    "email": "john@example.com",
+    "password": "secureP@ssword123",
+}
+
 user_update_self_example = {
     "username": "john-doe-updated",
     "email": "john.updated@example.com",

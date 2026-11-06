@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from errors.user import UserAlreadyExistError, UserNotFoundError
-from schemas.user import UserCreateSchema, UserUpdateSelfSchema
+from schemas.user import UserSignupSchema, UserUpdateSelfSchema
 from services.user import UserService
 
 
@@ -22,7 +22,7 @@ async def service(session):
 @pytest.fixture
 async def created_user(service):
     uid = str(uuid4())[:8]
-    data = UserCreateSchema(
+    data = UserSignupSchema(
         username=f"user_{uid}",
         email=f"user_{uid}@example.com",
         password="password",
@@ -33,7 +33,7 @@ async def created_user(service):
 class TestCreate:
     async def test_persists_and_returns_schema(self, service):
         uid = str(uuid4())[:8]
-        data = UserCreateSchema(
+        data = UserSignupSchema(
             username=f"new_{uid}",
             email=f"new_{uid}@example.com",
             password="password",
@@ -43,7 +43,7 @@ class TestCreate:
         assert result.username == data.username
 
     async def test_raises_on_duplicate_username(self, service, created_user):
-        data = UserCreateSchema(
+        data = UserSignupSchema(
             username=created_user.username,
             email="other@example.com",
             password="password",
@@ -67,7 +67,7 @@ class TestUpdate:
 class TestLogging:
     async def test_create_emits_info(self, service, caplog):
         uid = str(uuid4())[:8]
-        data = UserCreateSchema(
+        data = UserSignupSchema(
             username=f"log_{uid}",
             email=f"log_{uid}@example.com",
             password="password",

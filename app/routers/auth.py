@@ -1,18 +1,22 @@
 import secrets
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from config.settings import settings
 from dependencies.auth import CurrentUserDep, VerifyCsrf
 from dependencies.service import get_service_dep
+from docs.user import user_signup_example
 from schemas.auth import LoginResponse
+from schemas.user import UserSignupSchema
 from services.auth import AuthService
+from services.user import UserService
 
 auth_router = APIRouter(prefix="/auth")
 
 ServiceDep = Annotated[AuthService, get_service_dep(AuthService)]
+UserServiceDep = Annotated[UserService, get_service_dep(UserService)]
 
 SESSION_COOKIE = "session"
 CSRF_COOKIE = "csrf_token"
@@ -60,6 +64,25 @@ async def login(
     """
     token = await service.login(form_data)
     _set_auth_cookies(response, token.access_token)
+    return LoginResponse(detail="ok")
+
+
+@auth_router.post("/signup", include_in_schema=False)
+async def signup(
+    response: Response,
+    user_data: Annotated[UserSignupSchema, Body(examples=[user_signup_example])],
+    user_service: UserServiceDep,
+    auth_service: ServiceDep,
+) -> LoginResponse:
+    """
+    Create a new account with a username, email, and password, then log in.
+
+    Sets an httpOnly `session` cookie and a readable `csrf_token` cookie, same as
+    `/auth/token`.
+    """
+    user = await user_service.create(user_data)
+    access_token = auth_service.create_access_token(user.username)
+    _set_auth_cookies(response, access_token)
     return LoginResponse(detail="ok")
 
 
