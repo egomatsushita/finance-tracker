@@ -1,3 +1,7 @@
+// (app)/layout.tsx gates rendering on client-side auth state, so this
+// segment can never produce a statically-verifiable instant shell.
+export const instant = false
+
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-ground px-6 text-center">
