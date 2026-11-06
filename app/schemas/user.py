@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import ConfigDict, EmailStr
+from pydantic import ConfigDict, EmailStr, Field
 
 from schemas.base import Base
 
@@ -19,7 +19,7 @@ class UserCreateHashSchema(UserBase):
 class UserSignupSchema(Base):
     username: str
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8)
 
 
 class UserUpdateBaseSchema(Base):

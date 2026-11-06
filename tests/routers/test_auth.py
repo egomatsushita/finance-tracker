@@ -185,6 +185,18 @@ async def test_signup_missing_fields(client: AsyncClient):
     assert response.status_code == 422
 
 
+async def test_signup_password_too_short(client: AsyncClient):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "shortpw",
+            "email": "shortpw@example.com",
+            "password": "short",
+        },
+    )
+    assert response.status_code == 422
+
+
 async def test_csrf_valid_header_accepted(
     client: AsyncClient, member_token: AuthCookies
 ):
