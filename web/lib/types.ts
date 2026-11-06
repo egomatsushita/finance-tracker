@@ -1,11 +1,8 @@
-export type UserRole = 'admin' | 'member'
-
 export type User = {
   id: string
   username: string
   email: string
   is_active: boolean
-  role: UserRole
   created_at: string
   updated_at: string
 }

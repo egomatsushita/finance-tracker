@@ -1,13 +1,14 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { getWithAuthHandling, loginRequest, logoutRequest, resetUnauthorizedGuard } from './api'
+import { getWithAuthHandling, loginRequest, logoutRequest, resetUnauthorizedGuard, signupRequest } from './api'
 import type { User } from './types'
 
 type AuthContextValue = {
   user: User | null
   loading: boolean
   login: (username: string, password: string) => Promise<void>
+  signup: (username: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -48,12 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(hydratedUser)
   }, [])
 
+  const signup = useCallback(async (username: string, email: string, password: string) => {
+    await signupRequest(username, email, password)
+    resetUnauthorizedGuard()
+    const hydratedUser = await hydrate()
+    if (hydratedUser === null) {
+      throw new Error('Signup succeeded but failed to load user profile')
+    }
+    setUser(hydratedUser)
+  }, [])
+
   const logout = useCallback(async () => {
     await logoutRequest()
     setUser(null)
   }, [])
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth(): AuthContextValue {

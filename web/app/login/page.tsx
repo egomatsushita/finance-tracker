@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -74,6 +75,12 @@ export default function LoginPage() {
             </Button>
           </form>
         </Card>
+        <p className="mt-4 text-center text-sm text-muted-text">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="text-highlight underline">
+            Sign up
+          </Link>
+        </p>
       </div>
     </main>
   )
