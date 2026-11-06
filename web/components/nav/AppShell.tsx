@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useAuth } from '@/lib/auth'
 import { MobileDrawer } from './MobileDrawer'
@@ -9,7 +8,6 @@ import { TopBar } from './TopBar'
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { logout } = useAuth()
-  const router = useRouter()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const handleLogout = useCallback(async () => {
@@ -19,8 +17,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       // Whatever the cause, still send the user to /login rather than
       // leaving them stuck on a broken authed page.
     }
-    router.replace('/login')
-  }, [logout, router])
+    // Hard navigation, not router.replace(): the login page is otherwise
+    // reused from the Next.js router cache (same component instance, not
+    // remounted), so react-hook-form's inputs keep whatever was last typed
+    // in them. A full reload guarantees a clean login form, same as the
+    // session-expiry redirect in lib/api.ts's handleUnauthorized().
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign('/login')
+  }, [logout])
 
   useEffect(() => {
     const mql = window.matchMedia('(min-width: 768px)')
