@@ -12,7 +12,7 @@ Design, confirmed sound on review:
 - Uses `secrets.compare_digest` for the cookie/header comparison (timing-safe).
 - `SameSite=Lax` on both cookies + strict CORS `allow_origins` (no credentialed wildcard) means cross-site POST/PUT/PATCH/DELETE won't carry the session cookie at all, and a custom `X-CSRF-Token` header forces a preflight that a non-allowlisted origin can't pass — double-submit is defense in depth here, not the sole mitigation.
 - `cookie_secure` defaults `True`, documented override (`COOKIE_SECURE=false`) in `.env.example` for local http dev.
-- All mutating routes audited and confirmed to carry `dependencies=[..., VerifyCsrf]`: admin_user (create/update/delete), user (PUT), transaction (create/PATCH/delete), auth logout. `/auth/token` (login) and GETs correctly exempt.
+- All mutating routes audited and confirmed to carry `dependencies=[..., VerifyCsrf]`: user (PUT), transaction (create/PATCH/delete), auth logout. `/auth/token` (login), `/auth/signup` (public signup, added FT-45), and GETs correctly exempt. (`admin_user` router no longer exists as of FT-45 — role system removed.)
 - Exception mapped via domain `CsrfError(AuthError)` → handler in `exception_handlers.py`, not raised as `HTTPException` in the dependency — compliant with the project's layering rule.
 
 Residual gaps worth flagging on future related diffs (minor, not blocking):

@@ -122,3 +122,14 @@ export async function loginRequest(username: string, password: string): Promise<
 export async function logoutRequest(): Promise<void> {
   await api.post('/auth/logout')
 }
+
+export async function signupRequest(
+  username: string,
+  email: string,
+  password: string,
+): Promise<LoginResponse> {
+  return request<LoginResponse>('/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ username, email, password }),
+  })
+}

@@ -38,7 +38,7 @@ async def test_login_unknown_user(client: AsyncClient):
 
 async def test_invalid_token(client: AsyncClient):
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": "not-a-valid-token"},
     )
     assert response.status_code == 401
@@ -49,7 +49,7 @@ async def test_expired_token(client: AsyncClient):
         {"sub": "admin", "exp": datetime(2000, 1, 1, tzinfo=timezone.utc)}
     )
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": token},
     )
     assert response.status_code == 401
@@ -58,14 +58,14 @@ async def test_expired_token(client: AsyncClient):
 async def test_token_missing_sub(client: AsyncClient):
     token = AuthService.encode_jwt({"exp": datetime(2100, 1, 1, tzinfo=timezone.utc)})
     response = await client.get(
-        "/admin/users/",
+        "/users/me",
         cookies={"session": token},
     )
     assert response.status_code == 401
 
 
 async def test_missing_session_cookie(client: AsyncClient):
-    response = await client.get("/admin/users/")
+    response = await client.get("/users/me")
     assert response.status_code == 401
 
 
@@ -130,6 +130,71 @@ async def test_csrf_mismatched_header_rejected(
         },
     )
     assert response.status_code == 403
+
+
+async def test_signup_valid(client: AsyncClient):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "newbie",
+            "email": "newbie@example.com",
+            "password": "newbiepassword",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json() == {"detail": "ok"}
+
+    session_cookie = next(c for c in response.cookies.jar if c.name == "session")
+    csrf_cookie = next(c for c in response.cookies.jar if c.name == "csrf_token")
+    assert session_cookie.has_nonstandard_attr("HttpOnly")
+    assert not csrf_cookie.has_nonstandard_attr("HttpOnly")
+
+    me_response = await client.get(
+        "/users/me", cookies={"session": session_cookie.value}
+    )
+    assert me_response.status_code == 200
+    assert me_response.json()["username"] == "newbie"
+
+
+async def test_signup_duplicate_username(client: AsyncClient, member_user):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "member",
+            "email": "someoneelse@example.com",
+            "password": "password",
+        },
+    )
+    assert response.status_code == 409
+
+
+async def test_signup_duplicate_email(client: AsyncClient, member_user):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "someoneelse",
+            "email": "member@example.com",
+            "password": "password",
+        },
+    )
+    assert response.status_code == 409
+
+
+async def test_signup_missing_fields(client: AsyncClient):
+    response = await client.post("/auth/signup", json={"username": "incomplete"})
+    assert response.status_code == 422
+
+
+async def test_signup_password_too_short(client: AsyncClient):
+    response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "shortpw",
+            "email": "shortpw@example.com",
+            "password": "short",
+        },
+    )
+    assert response.status_code == 422
 
 
 async def test_csrf_valid_header_accepted(

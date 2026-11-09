@@ -1,6 +1,6 @@
 - [Agent and Skill Config Reviews](project_agent_skill_config.md) — .claude/ config files require a workflow-tooling review lens, not the standard FastAPI checklist
 - [Skill diff pre-injection alignment](feedback_skill_diff_injection.md) — skills claiming to pass a diff to an agent must pre-inject it with ! backtick syntax or the agent silently falls back
-- [RBAC patterns and known gaps](project_rbac_patterns.md) — role escalation via self-update; user_router ownership dep is per-route not router-level (fail-open risk confirmed real)
+- [RBAC removal (FT-45)](project_rbac_patterns.md) — role system and /admin/users removed entirely; don't flag their absence, verify_ownership is now id-only; dead get_all/delete code left behind
 - [httpOnly cookie + CSRF migration (FT-43)](project_httponly_cookie_csrf.md) — double-submit CSRF design verified sound; logout-without-valid-cookie and frontend logout try/finally are the residual gaps
 - [Transaction model/repo/schema patterns](project_transaction_patterns.md) — duplicate method defs, text() injection risk, user_id IDOR gap, update validator blind spot, missing amount sign constraint
 - [Logging implementation patterns](project_logging_patterns.md) — lazy %s formatting required, logger below imports, ownership-based idempotency guard, sensitive field filtering pattern

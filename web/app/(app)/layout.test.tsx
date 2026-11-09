@@ -45,7 +45,7 @@ describe('AppLayout', () => {
 
   it('renders the app shell and children once loaded with a user', () => {
     useAuthMock.mockReturnValue({
-      user: { id: '1', username: 'member', email: 'm@example.com', is_active: true, role: 'member' },
+      user: { id: '1', username: 'member', email: 'm@example.com', is_active: true },
       loading: false,
     })
     render(

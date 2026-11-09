@@ -40,7 +40,7 @@ async def read_user(user_id: UUID, service: ServiceDep) -> UserReadSchema:
     """
     Retrieve a user by the given `user_id`.
 
-    Returns a user with their id, username, email, role, active status and timestamps.
+    Returns a user with their id, username, email, active status and timestamps.
     """
     user = await service.get_by_id(user_id)
     return user
@@ -66,7 +66,7 @@ async def update_user(
     - **email**: unique email address
     - **password**: plain-text password (will be hashed before storage)
 
-    Returns the updated user with their id, username, email, role, active status and
+    Returns the updated user with their id, username, email, active status and
     timestamps.
     """
     user = await service.update(user_id, data)

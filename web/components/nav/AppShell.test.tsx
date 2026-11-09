@@ -2,15 +2,13 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { useAuthMock, usePathnameMock, replace } = vi.hoisted(() => ({
+const { useAuthMock, usePathnameMock } = vi.hoisted(() => ({
   useAuthMock: vi.fn(),
   usePathnameMock: vi.fn(),
-  replace: vi.fn(),
 }))
 
 vi.mock('@/lib/auth', () => ({ useAuth: useAuthMock }))
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace }),
   usePathname: usePathnameMock,
 }))
 
@@ -42,6 +40,7 @@ describe('AppShell', () => {
   beforeEach(() => {
     usePathnameMock.mockReturnValue('/')
     useAuthMock.mockReturnValue({ logout: vi.fn().mockResolvedValue(undefined) })
+    vi.stubGlobal('location', { ...window.location, assign: vi.fn() })
   })
 
   afterEach(() => {
@@ -94,7 +93,7 @@ describe('AppShell', () => {
     expect(screen.queryAllByRole('link', { name: 'Overview' })).toHaveLength(1)
   })
 
-  it('logs out and redirects to /login when logout is clicked', async () => {
+  it('logs out and hard-navigates to /login when logout is clicked', async () => {
     stubMatchMedia(false)
     const logout = vi.fn().mockResolvedValue(undefined)
     useAuthMock.mockReturnValue({ logout })
@@ -106,7 +105,21 @@ describe('AppShell', () => {
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Log out' })[0])
     expect(logout).toHaveBeenCalledTimes(1)
-    expect(replace).toHaveBeenCalledWith('/login')
+    expect(window.location.assign).toHaveBeenCalledWith('/login')
+  })
+
+  it('still hard-navigates to /login when logout rejects', async () => {
+    stubMatchMedia(false)
+    const logout = vi.fn().mockRejectedValue(new Error('network down'))
+    useAuthMock.mockReturnValue({ logout })
+    render(
+      <AppShell>
+        <p>content</p>
+      </AppShell>,
+    )
+
+    await userEvent.click(screen.getAllByRole('button', { name: 'Log out' })[0])
+    expect(window.location.assign).toHaveBeenCalledWith('/login')
   })
 
   it('renders children inside the main content area', () => {

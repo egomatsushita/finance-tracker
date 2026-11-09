@@ -3,13 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from errors.params import InvalidFilterError
-from schemas.params import (
-    FilterParams,
-    TransactionFilterParams,
-    TransactionSummaryFilterParams,
-)
-
-FilterParamsDep = Annotated[FilterParams, Depends()]
+from schemas.params import TransactionFilterParams, TransactionSummaryFilterParams
 
 
 def get_transaction_filter_params(

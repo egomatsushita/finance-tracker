@@ -16,10 +16,12 @@ class TestSecurityLogging:
             for r in caplog.records
         )
 
-    async def test_forbidden_logs_warning(self, client, member_token, caplog):
+    async def test_forbidden_logs_warning(
+        self, client, member_token, admin_user, caplog
+    ):
         with caplog.at_level(logging.WARNING, logger="exception_handlers"):
             response = await client.get(
-                "/admin/users/",
+                f"/users/{admin_user.id}",
                 **auth_kwargs(member_token),
             )
         assert response.status_code == 403
@@ -32,7 +34,7 @@ class TestSecurityLogging:
         bad_token = "not-a-valid-token"
         with caplog.at_level(logging.WARNING, logger="exception_handlers"):
             response = await client.get(
-                "/admin/users/",
+                "/users/me",
                 cookies={"session": bad_token},
             )
         assert response.status_code == 401

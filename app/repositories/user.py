@@ -4,13 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.user import User
-from schemas.params import FilterParams
 from schemas.user import UserCreateHashSchema, UserUpdateHashSchema
-
-ORDER_BY_COLUMNS = {
-    "created_at": User.created_at,
-    "updated_at": User.updated_at,
-}
 
 
 class UserRepository:
@@ -26,27 +20,6 @@ class UserRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-
-    async def get_all(self, filter_params: FilterParams) -> list[User]:
-        """
-        Retrieve a paginated and ordered list of all users.
-
-        Args:
-            filter_params: Pagination and ordering parameters, including `offset`,
-                           `limit` and `order_by`.
-
-        Returns:
-            A list of `User` instances matching the given filter parameters.
-            Returns an empty list if no users are found.
-        """
-        resp = await self.session.execute(
-            select(User)
-            .offset(filter_params.offset)
-            .limit(filter_params.limit)
-            .order_by(ORDER_BY_COLUMNS[filter_params.order_by])
-        )
-        users = resp.scalars().all()
-        return users
 
     async def get_by_id(self, user_id: UUID) -> User | None:
         """
@@ -115,21 +88,3 @@ class UserRepository:
         await self.session.flush()
         await self.session.refresh(user)
         return user
-
-    async def delete(self, user_id: UUID) -> bool:
-        """
-        Delete a user by the given ID.
-
-        Args:
-            user_id: A unique user ID
-
-        Returns:
-            `True` if user was deleted. `False` if not found.
-        """
-        user = await self.get_by_id(user_id)
-
-        if user is None:
-            return False
-
-        await self.session.delete(user)
-        return True

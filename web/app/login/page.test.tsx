@@ -104,4 +104,9 @@ describe('LoginPage', () => {
     resolveLogin()
     await waitFor(() => expect(push).toHaveBeenCalledWith('/'))
   })
+
+  it('links to the signup page', () => {
+    render(<LoginPage />)
+    expect(screen.getByRole('link', { name: /sign up/i })).toHaveAttribute('href', '/signup')
+  })
 })

@@ -78,6 +78,23 @@ describe('api.ts cookie/CSRF behavior', () => {
     expect(result).toEqual({ detail: 'ok' })
   })
 
+  it('signupRequest posts to /auth/signup with credentials and the parsed body', async () => {
+    const fetchMock = stubFetch({ detail: 'ok' })
+    const { signupRequest } = await import('./api')
+
+    const result = await signupRequest('newbie', 'newbie@example.com', 'password')
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(String(url)).toContain('/auth/signup')
+    expect(init.credentials).toBe('include')
+    expect(JSON.parse(init.body)).toEqual({
+      username: 'newbie',
+      email: 'newbie@example.com',
+      password: 'password',
+    })
+    expect(result).toEqual({ detail: 'ok' })
+  })
+
   it('logoutRequest posts to /auth/logout with credentials and CSRF header', async () => {
     document.cookie = 'csrf_token=abc123'
     const fetchMock = stubFetch({ detail: 'ok' })

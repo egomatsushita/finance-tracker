@@ -23,8 +23,8 @@ uv run alembic revision --autogenerate -m "description"
 Tests use `pytest` with `httpx` and an in-memory SQLite database. Run with `uv run pytest`. To run a single file or test:
 
 ```bash
-uv run pytest tests/routers/test_admin_users.py
-uv run pytest tests/routers/test_admin_users.py::TestCreateUser::test_valid
+uv run pytest tests/routers/test_users.py
+uv run pytest tests/routers/test_users.py::test_member_can_read_own_profile
 ```
 
 Linting runs automatically via a ruff hook on file save.
@@ -54,7 +54,7 @@ Then use `service: ServiceDep` in handler parameters.
 
 **Docstrings:** All service and repository methods use the structured format: description / `Args:` / `Returns:` / `Raises:`.
 
-**Roles:** `admin` has full CRUD access via `/admin/users` (`RequireAdmin`). `member` can only read and update their own profile via `/users/{user_id}` (`VerifyOwnership`). `UserUpdateSelfSchema` uses `extra="forbid"` to prevent members from sending `role` or `is_active`. Role is stored as a plain string field on the User model.
+**Accounts:** There is no role system — any user can create their own account via the public `POST /auth/signup` endpoint (`UserSignupSchema`), which also logs them in. Every user can only read and update their own profile via `/users/{user_id}` (`VerifyOwnership`, a pure caller-id-equals-resource-id check). `UserUpdateSelfSchema` uses `extra="forbid"` to prevent sending `is_active`.
 
 **OpenAPI docs:** Endpoint metadata and body examples live in `app/docs/` as dicts and are unpacked into route decorators (e.g., `@router.get("/", **my_endpoints["get_all"])`). Follow this pattern for new routers.
 

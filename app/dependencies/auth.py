@@ -9,7 +9,7 @@ from dependencies.database import SessionDep
 from errors.auth import CredentialError, CsrfError, ForbiddenError
 from errors.user import UserNotFoundError
 from schemas.auth import TokenPayload
-from schemas.user import CurrentUser, UserRoleEnum
+from schemas.user import CurrentUser
 from services.auth import AuthService
 from services.user import UserService
 
@@ -71,7 +71,7 @@ async def get_current_user(token: TokenDep, session: SessionDep) -> CurrentUser:
         token: A raw JWT string.
         session: An active async database session.
     Returns:
-        A CurrentUser instance carrying the user's id and role.
+        A CurrentUser instance carrying the user's id.
     Raises:
         CredentialError: If the token is invalid, `sub` is missing,
                          or the user no longer exists in the database.
@@ -82,37 +82,22 @@ async def get_current_user(token: TokenDep, session: SessionDep) -> CurrentUser:
         user = await service.get_by_username(username)
     except UserNotFoundError:
         raise CredentialError()
-    return CurrentUser(id=user.id, role=user.role)
+    return CurrentUser(id=user.id)
 
 
 CurrentUserDep = Annotated[CurrentUser, Depends(get_current_user)]
 
 
-async def verify_admin(current_user: CurrentUserDep) -> None:
-    """
-    Verify the caller has the admin role.
-    Args:
-        current_user: The authenticated caller resolved by get_current_user.
-    Raises:
-        ForbiddenError: If the caller's role is not admin.
-    """
-    if current_user.role != UserRoleEnum.admin:
-        raise ForbiddenError()
-
-
-RequireAdmin = Depends(verify_admin)
-
-
 async def verify_ownership(user_id: UUID, current_user: CurrentUserDep) -> None:
     """
-    Verify the caller is the resource owner or an admin.
+    Verify the caller is the resource owner.
     Args:
         user_id: The UUID of the target resource, injected from the path parameter.
         current_user: The authenticated caller resolved by get_current_user.
     Raises:
-        ForbiddenError: If the caller is not the owner and not an admin.
+        ForbiddenError: If the caller is not the owner.
     """
-    if current_user.role != UserRoleEnum.admin and current_user.id != user_id:
+    if current_user.id != user_id:
         raise ForbiddenError()
 
 

@@ -6,12 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from errors.user import UserAlreadyExistError, UserNotFoundError
 from repositories.user import UserRepository
-from schemas.params import FilterParams
 from schemas.user import (
     UserCreateHashSchema,
-    UserCreateSchema,
     UserReadSchema,
-    UserUpdateAdminSchema,
+    UserSignupSchema,
     UserUpdateHashSchema,
     UserUpdateSelfSchema,
 )
@@ -24,17 +22,6 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.repo = UserRepository(session)
-
-    async def get_all(self, filter_params: FilterParams) -> list[UserReadSchema]:
-        """
-        Return a paginated list of all users.
-        Args:
-            filter_params: pagination and ordering options (offset, limit, order_by).
-        Returns:
-            A list of validated UserReadSchema instances.
-        """
-        users = await self.repo.get_all(filter_params)
-        return [UserReadSchema.model_validate(user) for user in users]
 
     async def get_by_id(self, user_id: UUID) -> UserReadSchema:
         """
@@ -70,7 +57,7 @@ class UserService:
 
         return UserReadSchema.model_validate(user)
 
-    async def create(self, user_data: UserCreateSchema) -> UserReadSchema:
+    async def create(self, user_data: UserSignupSchema) -> UserReadSchema:
         """
         Create a new user, hashing the plain-text password before storage.
         Args:
@@ -94,7 +81,7 @@ class UserService:
         return UserReadSchema.model_validate(new_user)
 
     async def update(
-        self, user_id: UUID, user_data: UserUpdateSelfSchema | UserUpdateAdminSchema
+        self, user_id: UUID, user_data: UserUpdateSelfSchema
     ) -> UserReadSchema:
         """
         Update a user's data by ID. Only fields explicitly set are applied.
@@ -129,16 +116,3 @@ class UserService:
         safe_fields = user_data.model_fields_set - {"password", "hashed_password"}
         logger.info("user_updated user_id=%s fields=%s", user_id, sorted(safe_fields))
         return UserReadSchema.model_validate(updated_user)
-
-    async def delete(self, user_id: UUID) -> None:
-        """
-        Delete a user by ID.
-        Args:
-            user_id: the UUID of the user to delete.
-        Raises:
-            UserNotFoundError: if no user with the given ID exists.
-        """
-        success = await self.repo.delete(user_id)
-        if not success:
-            raise UserNotFoundError()
-        logger.info("user_deleted user_id=%s", user_id)
