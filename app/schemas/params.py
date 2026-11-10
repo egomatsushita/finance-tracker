@@ -10,13 +10,13 @@ class FilterParams(BaseModel):
     offset: int = Field(default=0, ge=0)
     limit: int = Field(default=10, ge=0, le=100)
     order_by: Literal["created_at", "updated_at"] = "created_at"
-    sort_dir: Literal["asc", "desc"] = "asc"
 
 
 class TransactionFilterParams(FilterParams):
     order_by: Literal["created_at", "updated_at", "transaction_date"] = (
         "transaction_date"
     )
+    sort_dir: Literal["asc", "desc"] = "asc"
     kind: TransactionKindEnum | None = None
     category: str | None = None
     transaction_date_from: datetime | None = None

@@ -80,7 +80,6 @@ def upgrade() -> None:
         for amount, category, day in EXPENSES_BY_MONTH[month_num]:
             rows.append(
                 dict(
-                    id=None,
                     amount=amount,
                     kind="expense",
                     category=category,
@@ -92,7 +91,6 @@ def upgrade() -> None:
         for amount, category, day in INCOME_BY_MONTH[month_num]:
             rows.append(
                 dict(
-                    id=None,
                     amount=amount,
                     kind="income",
                     category=category,
