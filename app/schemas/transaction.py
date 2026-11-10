@@ -28,9 +28,6 @@ class ExpenseCategoryEnum(str, Enum):
     transport = "transport"
     health = "health"
     entertainment = "entertainment"
-    education = "education"
-    clothing = "clothing"
-    travel = "travel"
     savings = "savings"
     other = "other"
 

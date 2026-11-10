@@ -163,7 +163,7 @@ class TestDelete:
         t = FinancialTransaction(
             amount="30.00",
             kind="expense",
-            category="clothing",
+            category="entertainment",
             user_id=user_id,
             transaction_date=datetime(2026, 5, 1, tzinfo=timezone.utc),
         )
@@ -207,7 +207,7 @@ class TestLogging:
         t = FinancialTransaction(
             amount="5.00",
             kind="expense",
-            category="clothing",
+            category="entertainment",
             user_id=user_id,
             transaction_date=datetime(2026, 6, 1, tzinfo=timezone.utc),
         )

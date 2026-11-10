@@ -18,9 +18,6 @@ export type ExpenseCategory =
   | 'transport'
   | 'health'
   | 'entertainment'
-  | 'education'
-  | 'clothing'
-  | 'travel'
   | 'savings'
   | 'other'
 

@@ -210,6 +210,21 @@ class TestCreateTransaction:
         assert body["kind"] == "expense"
         assert body["category"] == "transport"
 
+    async def test_dropped_category_returns_422(
+        self, client: AsyncClient, member_token: AuthCookies
+    ):
+        response = await client.post(
+            "/transactions/",
+            json={
+                "amount": "25.50",
+                "kind": "expense",
+                "category": "clothing",
+                "transaction_date": "2026-03-10T10:00:00Z",
+            },
+            **auth_kwargs(member_token, csrf=True),
+        )
+        assert response.status_code == 422
+
     async def test_mismatched_kind_category_returns_422(
         self, client: AsyncClient, member_token: AuthCookies
     ):
