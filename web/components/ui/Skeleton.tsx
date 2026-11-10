@@ -9,6 +9,21 @@ export function Skeleton({ className = '', announce = true }: { className?: stri
   )
 }
 
+export function OverviewSkeleton() {
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-1 flex-col gap-6 p-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Skeleton announce={false} className="h-24 w-full" />
+        <Skeleton announce={false} className="h-24 w-full" />
+        <Skeleton announce={false} className="h-24 w-full" />
+      </div>
+      <Skeleton announce={false} className="h-64 w-full" />
+      <Skeleton announce={false} className="h-64 w-full" />
+      <Skeleton announce={false} className="h-48 w-full" />
+    </div>
+  )
+}
+
 export function AppShellSkeleton() {
   return (
     <div role="status" aria-label="Loading" className="flex min-h-screen bg-ground">

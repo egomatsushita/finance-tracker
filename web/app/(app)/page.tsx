@@ -1,14 +1,10 @@
-// (app)/layout.tsx gates rendering on client-side auth state, so this
-// segment can never produce a statically-verifiable instant shell.
+import { OverviewClient } from './OverviewClient'
+
+// (app)/layout.tsx gates rendering on client-side auth state, and this
+// page's content depends on client-side data fetching (OverviewClient),
+// so it can never produce a statically-verifiable instant shell.
 export const instant = false
 
 export default function Home() {
-  return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-ground px-6 text-center">
-      <h1 className="text-4xl font-semibold tracking-tight text-ink">
-        Finance <span className="text-highlight">Tracker</span>
-      </h1>
-      <p className="font-mono text-sm text-muted-text">1,248.50</p>
-    </main>
-  )
+  return <OverviewClient />
 }
