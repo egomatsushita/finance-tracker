@@ -60,6 +60,53 @@ class TestGetAll:
         ids = [t.id for t in result]
         assert transaction.id not in ids
 
+    async def test_sort_dir_desc_reverses_order(self, service, session, user_id):
+        transactions = [
+            FinancialTransaction(
+                amount="10.00",
+                kind="expense",
+                category="groceries",
+                user_id=user_id,
+                transaction_date=datetime(2026, 7, day, tzinfo=timezone.utc),
+            )
+            for day in (1, 10, 20)
+        ]
+        session.add_all(transactions)
+        await session.flush()
+        for t in transactions:
+            await session.refresh(t)
+
+        result = await service.get_all(
+            user_id,
+            TransactionFilterParams(order_by="transaction_date", sort_dir="desc"),
+        )
+        ids = [t.id for t in result if t.id in {t.id for t in transactions}]
+        assert ids == [transactions[2].id, transactions[1].id, transactions[0].id]
+
+    async def test_omitting_sort_dir_preserves_ascending_default(
+        self, service, session, user_id
+    ):
+        transactions = [
+            FinancialTransaction(
+                amount="10.00",
+                kind="expense",
+                category="groceries",
+                user_id=user_id,
+                transaction_date=datetime(2026, 8, day, tzinfo=timezone.utc),
+            )
+            for day in (1, 10, 20)
+        ]
+        session.add_all(transactions)
+        await session.flush()
+        for t in transactions:
+            await session.refresh(t)
+
+        result = await service.get_all(
+            user_id, TransactionFilterParams(order_by="transaction_date")
+        )
+        ids = [t.id for t in result if t.id in {t.id for t in transactions}]
+        assert ids == [transactions[0].id, transactions[1].id, transactions[2].id]
+
 
 class TestGetById:
     async def test_returns_own_transaction(self, service, user_id, transaction):

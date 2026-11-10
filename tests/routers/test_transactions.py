@@ -25,6 +25,39 @@ async def member_transaction(override_db, member_user):
 
 
 @pytest.fixture(scope="function")
+async def member_transactions(override_db, member_user):
+    async with override_db() as session:
+        transactions = [
+            FinancialTransaction(
+                amount="10.00",
+                kind="expense",
+                category="groceries",
+                user_id=member_user.id,
+                transaction_date=datetime(2026, 1, 5, tzinfo=timezone.utc),
+            ),
+            FinancialTransaction(
+                amount="20.00",
+                kind="expense",
+                category="groceries",
+                user_id=member_user.id,
+                transaction_date=datetime(2026, 1, 15, tzinfo=timezone.utc),
+            ),
+            FinancialTransaction(
+                amount="30.00",
+                kind="expense",
+                category="groceries",
+                user_id=member_user.id,
+                transaction_date=datetime(2026, 1, 25, tzinfo=timezone.utc),
+            ),
+        ]
+        session.add_all(transactions)
+        await session.commit()
+        for t in transactions:
+            await session.refresh(t)
+        return transactions
+
+
+@pytest.fixture(scope="function")
 async def other_user_transaction(override_db, admin_user):
     async with override_db() as session:
         transaction = FinancialTransaction(
@@ -113,6 +146,50 @@ class TestListTransactions:
     async def test_no_token(self, client: AsyncClient):
         response = await client.get("/transactions/")
         assert response.status_code == 401
+
+
+class TestSortDir:
+    async def test_sort_dir_desc_reverses_order(
+        self, client: AsyncClient, member_token: AuthCookies, member_transactions
+    ):
+        response = await client.get(
+            "/transactions/?order_by=transaction_date&sort_dir=desc&limit=100",
+            **auth_kwargs(member_token),
+        )
+        assert response.status_code == 200
+        fixture_ids = {t.id for t in member_transactions}
+        ids = [t["id"] for t in response.json() if t["id"] in fixture_ids]
+        expected_ids = [
+            t.id
+            for t in sorted(
+                member_transactions, key=lambda t: t.transaction_date, reverse=True
+            )
+        ]
+        assert ids == expected_ids
+
+    async def test_omitting_sort_dir_preserves_ascending_default(
+        self, client: AsyncClient, member_token: AuthCookies, member_transactions
+    ):
+        response = await client.get(
+            "/transactions/?order_by=transaction_date&limit=100",
+            **auth_kwargs(member_token),
+        )
+        assert response.status_code == 200
+        fixture_ids = {t.id for t in member_transactions}
+        ids = [t["id"] for t in response.json() if t["id"] in fixture_ids]
+        expected_ids = [
+            t.id for t in sorted(member_transactions, key=lambda t: t.transaction_date)
+        ]
+        assert ids == expected_ids
+
+    async def test_invalid_sort_dir_returns_422(
+        self, client: AsyncClient, member_token: AuthCookies
+    ):
+        response = await client.get(
+            "/transactions/?sort_dir=bogus",
+            **auth_kwargs(member_token),
+        )
+        assert response.status_code == 422
 
 
 class TestCreateTransaction:

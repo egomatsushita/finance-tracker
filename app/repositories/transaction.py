@@ -61,10 +61,13 @@ class TransactionRepository:
                 FinancialTransaction.transaction_date
                 <= filter_params.transaction_date_to
             )
+        order_column = ORDER_BY_COLUMNS[filter_params.order_by]
+        if filter_params.sort_dir == "desc":
+            order_column = order_column.desc()
         query = (
             query.offset(filter_params.offset)
             .limit(filter_params.limit)
-            .order_by(ORDER_BY_COLUMNS[filter_params.order_by])
+            .order_by(order_column)
         )
         result = await self.session.execute(query)
         return result.scalars().all()
