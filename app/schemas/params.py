@@ -16,6 +16,7 @@ class TransactionFilterParams(FilterParams):
     order_by: Literal["created_at", "updated_at", "transaction_date"] = (
         "transaction_date"
     )
+    sort_dir: Literal["asc", "desc"] = "asc"
     kind: TransactionKindEnum | None = None
     category: str | None = None
     transaction_date_from: datetime | None = None
