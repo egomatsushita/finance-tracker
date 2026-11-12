@@ -9,16 +9,28 @@ import { getCategoryIcon } from '@/lib/categoryIcons'
 import { formatCategoryLabel, formatMoney } from '@/lib/format'
 import { useRecentTransactions, useTransactionSummary } from '@/lib/queries'
 
-function KpiCard({
+function monthDelta(series: number[]): number | null {
+  if (series.length < 2) return null
+  const prev = series[series.length - 2]
+  const curr = series[series.length - 1]
+  if (prev === 0) return null
+  return ((curr - prev) / Math.abs(prev)) * 100
+}
+
+function KpiTile({
   icon: Icon,
   label,
   value,
   tone,
+  series,
+  first,
 }: {
   icon: typeof Wallet
   label: string
   value: string
   tone: 'highlight' | 'income' | 'expense'
+  series: number[]
+  first?: boolean
 }) {
   const toneClasses = {
     highlight: 'bg-highlight/10 text-highlight',
@@ -30,17 +42,26 @@ function KpiCard({
     income: 'text-income',
     expense: 'text-expense',
   }[tone]
+  const delta = monthDelta(series)
 
   return (
-    <Card className="flex min-w-0 items-center gap-4">
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-4 p-5 ${first ? '' : 'border-t border-muted-border md:border-l md:border-t-0'}`}
+    >
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${toneClasses}`}>
         <Icon size={20} aria-hidden="true" />
       </span>
       <div className="min-w-0">
         <p className="text-sm text-muted-text">{label}</p>
         <p className={`truncate font-mono text-2xl font-semibold ${valueClasses}`}>{value}</p>
+        {delta !== null && (
+          <p className="text-xs text-muted-text">
+            {delta >= 0 ? '+' : ''}
+            {delta.toFixed(1)}% vs last month
+          </p>
+        )}
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -62,26 +83,32 @@ export function OverviewClient() {
 
   const hasTransactions = recent.data.length > 0 || summary.data.by_month.length > 0
 
+  const incomeSeries = summary.data.by_month.map((m) => Number(m.income))
+  const expenseSeries = summary.data.by_month.map((m) => Number(m.expense))
+  const netSeries = summary.data.by_month.map((m) => Number(m.income) - Number(m.expense))
+
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <KpiCard icon={Wallet} label="Net" value={formatMoney(summary.data.net)} tone="highlight" />
-        <KpiCard
+      <div className="flex flex-col divide-muted-border rounded-2xl border border-muted-border bg-surface md:flex-row">
+        <KpiTile icon={Wallet} label="Net" value={formatMoney(summary.data.net)} tone="highlight" series={netSeries} first />
+        <KpiTile
           icon={TrendingUp}
           label="Income"
           value={formatMoney(summary.data.total_income)}
           tone="income"
+          series={incomeSeries}
         />
-        <KpiCard
+        <KpiTile
           icon={TrendingDown}
           label="Expense"
           value={formatMoney(summary.data.total_expense)}
           tone="expense"
+          series={expenseSeries}
         />
       </div>
 
       {!hasTransactions ? (
-        <Card>
+        <Card elevated={false}>
           <p className="py-8 text-center text-sm text-muted-text">
             No transactions yet — add one to see your overview come to life.
           </p>
@@ -94,7 +121,7 @@ export function OverviewClient() {
           </Card>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Card>
+            <Card elevated={false}>
               <div className="mb-2 flex items-baseline justify-between gap-2">
                 <h2 className="text-sm font-medium text-muted-text">Expenses by category</h2>
                 <p className="font-mono text-sm font-semibold text-ink">
@@ -104,7 +131,7 @@ export function OverviewClient() {
               <CategoryBarChart data={summary.data.by_category} />
             </Card>
 
-            <Card>
+            <Card elevated={false}>
               <h2 className="mb-2 text-sm font-medium text-muted-text">Recent transactions</h2>
               {recent.data.length === 0 ? (
                 <p className="py-4 text-center text-sm text-muted-text">No transactions yet</p>
