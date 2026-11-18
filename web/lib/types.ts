@@ -35,6 +35,27 @@ export type Transaction = {
   updated_at: string
 }
 
+export type TransactionCreatePayload = {
+  amount: string
+  kind: TransactionKind
+  category: TransactionCategory
+  description: string | null
+  transaction_date: string
+}
+
+export type TransactionUpdatePayload = Partial<TransactionCreatePayload>
+
+export type TransactionListParams = {
+  offset: number
+  limit: number
+  order_by: 'transaction_date'
+  sort_dir: 'asc' | 'desc'
+  kind?: TransactionKind
+  category?: TransactionCategory
+  transaction_date_from?: string
+  transaction_date_to?: string
+}
+
 export type TransactionSummary = {
   total_income: string
   total_expense: string
