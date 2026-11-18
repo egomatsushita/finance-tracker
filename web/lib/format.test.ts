@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCategoryLabel, formatMoney } from './format'
+import { formatCategoryLabel, formatDate, formatMoney } from './format'
 
 describe('formatMoney', () => {
   it('formats a typical decimal string with thousands separators', () => {
@@ -20,5 +20,11 @@ describe('formatCategoryLabel', () => {
   it('capitalizes the first letter', () => {
     expect(formatCategoryLabel('groceries')).toBe('Groceries')
     expect(formatCategoryLabel('other')).toBe('Other')
+  })
+})
+
+describe('formatDate', () => {
+  it('formats an ISO date string as a short readable date', () => {
+    expect(formatDate('2026-03-05T00:00:00Z')).toBe('Mar 5, 2026')
   })
 })
