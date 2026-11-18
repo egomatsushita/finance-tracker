@@ -24,6 +24,15 @@ export function OverviewSkeleton() {
   )
 }
 
+export function TransactionsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-1 flex-col gap-6 p-6">
+      <Skeleton announce={false} className="h-16 w-full" />
+      <Skeleton announce={false} className="h-96 w-full" />
+    </div>
+  )
+}
+
 export function AppShellSkeleton() {
   return (
     <div role="status" aria-label="Loading" className="flex min-h-screen bg-ground">
