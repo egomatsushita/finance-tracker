@@ -23,7 +23,7 @@ export function TransactionsTable({ rows, sortDir, onToggleSort, onEdit, onDelet
               <button
                 type="button"
                 onClick={onToggleSort}
-                className="inline-flex items-center gap-1 font-medium text-muted-text"
+                className="inline-flex cursor-pointer items-center gap-1 font-medium text-muted-text"
               >
                 Date
                 <SortIcon size={14} aria-hidden="true" />
@@ -64,7 +64,7 @@ export function TransactionsTable({ rows, sortDir, onToggleSort, onEdit, onDelet
                       type="button"
                       onClick={() => onEdit(row)}
                       aria-label={`Edit transaction from ${formatDate(row.transaction_date)}`}
-                      className="text-muted-text hover:text-ink"
+                      className="cursor-pointer text-muted-text hover:text-ink"
                     >
                       <Pencil size={16} aria-hidden="true" />
                     </button>
@@ -72,7 +72,7 @@ export function TransactionsTable({ rows, sortDir, onToggleSort, onEdit, onDelet
                       type="button"
                       onClick={() => onDelete(row)}
                       aria-label={`Delete transaction from ${formatDate(row.transaction_date)}`}
-                      className="text-muted-text hover:text-expense"
+                      className="cursor-pointer text-muted-text hover:text-expense"
                     >
                       <Trash2 size={16} aria-hidden="true" />
                     </button>
