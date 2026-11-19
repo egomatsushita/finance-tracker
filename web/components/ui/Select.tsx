@@ -160,7 +160,7 @@ export function Select({
           onClick={() => (isOpen ? close() : open())}
           onBlur={() => onBlur?.()}
           onKeyDown={handleButtonKeyDown}
-          className={`flex w-full items-center justify-between rounded-lg border border-muted-border bg-surface py-2 pl-3 pr-8 text-left text-base text-ink outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+          className={`flex w-full cursor-pointer items-center justify-between rounded-lg border border-muted-border bg-surface py-2 pl-3 pr-8 text-left text-base text-ink outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
         >
           <span className="truncate">{selectedOption?.label ?? ''}</span>
         </button>
