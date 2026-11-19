@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { AppShellSkeleton, Skeleton } from './Skeleton'
+import { AppShellSkeleton, Skeleton, TransactionsSkeleton } from './Skeleton'
 
 describe('Skeleton', () => {
   it('renders a pulsing block', () => {
@@ -12,6 +12,13 @@ describe('Skeleton', () => {
 describe('AppShellSkeleton', () => {
   it('renders a status role for the overall shell skeleton', () => {
     render(<AppShellSkeleton />)
+    expect(screen.getByRole('status')).toBeInTheDocument()
+  })
+})
+
+describe('TransactionsSkeleton', () => {
+  it('renders a status role for the transactions page skeleton', () => {
+    render(<TransactionsSkeleton />)
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
 })

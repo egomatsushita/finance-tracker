@@ -21,7 +21,7 @@ export function Input({ label, error, id, name, className = '', ref, ...rest }: 
         name={name}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
-        className={`rounded-lg border border-muted-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-brand ${className}`}
+        className={`rounded-lg border border-muted-border bg-surface px-3 py-2 text-base text-ink outline-none focus:border-brand ${className}`}
       />
       {error && (
         <p id={`${inputId}-error`} role="alert" className="text-sm text-expense">
