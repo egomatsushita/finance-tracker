@@ -36,7 +36,7 @@ export const transactionFormSchema = z
       .min(1, 'Amount is required')
       .refine((v) => Number(v) > 0, 'Amount must be greater than 0'),
     kind: z.enum(['income', 'expense']),
-    category: z.enum([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES] as [string, ...string[]]),
+    category: z.enum(ALL_CATEGORIES as [string, ...string[]]),
     description: z.string().max(255, 'Description must be 255 characters or fewer').optional(),
     transaction_date: z.string().min(1, 'Date is required'),
   })
