@@ -160,7 +160,7 @@ export function Select({
           onClick={() => (isOpen ? close() : open())}
           onBlur={() => onBlur?.()}
           onKeyDown={handleButtonKeyDown}
-          className={`flex w-full cursor-pointer items-center justify-between rounded-lg border border-muted-border bg-surface py-2 pl-3 pr-8 text-left text-base text-ink outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+          className={`flex w-full min-w-28 cursor-pointer items-center justify-between rounded-lg border border-muted-border bg-surface py-2 pl-3 pr-8 text-left text-base text-ink outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
         >
           <span className="truncate">{selectedOption?.label ?? ''}</span>
         </button>
@@ -178,8 +178,8 @@ export function Select({
               id={listboxId}
               aria-labelledby={selectId}
               tabIndex={-1}
-              style={{ top: listboxRect.top, left: listboxRect.left, width: listboxRect.width }}
-              className="fixed z-50 mt-1 max-h-60 overflow-auto rounded-lg border border-muted-border bg-surface py-1 text-base shadow-md"
+              style={{ top: listboxRect.top, left: listboxRect.left, minWidth: listboxRect.width }}
+              className="fixed z-50 mt-1 max-h-60 w-max overflow-auto rounded-lg border border-muted-border bg-surface py-1 text-base shadow-md"
             >
               {options.map((option, index) => (
                 <li
@@ -188,7 +188,7 @@ export function Select({
                   aria-selected={option.value === value}
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => selectOption(option)}
-                  className={`cursor-pointer px-3 py-2 text-ink ${index === activeIndex ? 'bg-brand/10' : ''}`}
+                  className={`cursor-pointer whitespace-nowrap px-3 py-2 text-ink ${index === activeIndex ? 'bg-brand/10' : ''}`}
                 >
                   {option.label}
                 </li>
