@@ -2,17 +2,17 @@
 
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { CalendarDays, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { formatDate } from '@/lib/format'
 import { useUpdateProfile } from '@/lib/queries'
-import type { ProfileUpdatePayload } from '@/lib/types'
+import type { ProfileUpdatePayload, User } from '@/lib/types'
 
 const profileFormSchema = z
   .object({
@@ -31,6 +31,37 @@ const profileFormSchema = z
   })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
+
+function ProfileHeader({ user, children }: { user: User; children?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-muted-border bg-surface p-6">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-base font-semibold text-brand">
+        {user.username.charAt(0).toUpperCase()}
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-lg font-semibold text-ink">{user.username}</p>
+        <p className="truncate text-sm text-muted-text">{user.email}</p>
+      </div>
+      {children && <div className="ml-auto shrink-0">{children}</div>}
+    </div>
+  )
+}
+
+function StatTile({ icon: Icon, label, value, first }: { icon: LucideIcon; label: string; value: string; first?: boolean }) {
+  return (
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-4 p-5 ${first ? '' : 'border-t border-muted-border md:border-l md:border-t-0'}`}
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+        <Icon size={20} aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm text-muted-text">{label}</p>
+        <p className="truncate text-lg font-semibold text-ink">{value}</p>
+      </div>
+    </div>
+  )
+}
 
 export function ProfileClient() {
   const { user, refreshUser } = useAuth()
@@ -89,40 +120,28 @@ export function ProfileClient() {
 
   if (!isEditing) {
     return (
-      <div className="mx-auto max-w-sm p-4">
-        <Card>
-          <h1 className="mb-4 text-lg font-semibold text-ink">Profile</h1>
-          <dl className="flex flex-col gap-3 text-sm">
-            <div>
-              <dt className="text-muted-text">Username</dt>
-              <dd className="text-ink">{user.username}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-text">Email</dt>
-              <dd className="text-ink">{user.email}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-text">Status</dt>
-              <dd className="text-ink">{user.is_active ? 'Active' : 'Inactive'}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-text">Member since</dt>
-              <dd className="text-ink">{formatDate(user.created_at)}</dd>
-            </div>
-          </dl>
-          <Button onClick={startEditing} className="mt-6">
-            Edit
-          </Button>
-        </Card>
-      </div>
+      <main className="flex flex-1 flex-col gap-6 p-6">
+        <ProfileHeader user={user}>
+          <Button onClick={startEditing}>Edit</Button>
+        </ProfileHeader>
+        <div className="flex flex-col divide-muted-border rounded-2xl border border-muted-border bg-surface md:flex-row">
+          <StatTile
+            icon={ShieldCheck}
+            label="Status"
+            value={user.is_active ? 'Active' : 'Inactive'}
+            first
+          />
+          <StatTile icon={CalendarDays} label="Member since" value={formatDate(user.created_at)} />
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="mx-auto max-w-sm p-4">
-      <Card>
-        <h1 className="mb-4 text-lg font-semibold text-ink">Edit profile</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+    <main className="flex flex-1 flex-col gap-6 p-6">
+      <ProfileHeader user={user} />
+      <div className="rounded-2xl border border-muted-border bg-surface p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4 sm:grid-cols-2" noValidate>
           <Input
             label="Username"
             type="text"
@@ -152,11 +171,11 @@ export function ProfileClient() {
             {...register('confirmPassword')}
           />
           {formError && (
-            <p role="alert" className="text-sm text-expense">
+            <p role="alert" className="text-sm text-expense sm:col-span-2">
               {formError}
             </p>
           )}
-          <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="mt-2 flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="secondary" onClick={cancelEditing}>
               Cancel
             </Button>
@@ -165,7 +184,7 @@ export function ProfileClient() {
             </Button>
           </div>
         </form>
-      </Card>
-    </div>
+      </div>
+    </main>
   )
 }
