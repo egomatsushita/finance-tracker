@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ProfilePage from './page'
+import { ProfileClient } from './ProfileClient'
 
 const { useAuthMock, useUpdateProfile, mutateAsync, showToast, refreshUser, MockApiError } = vi.hoisted(() => {
   class MockApiError extends Error {
@@ -37,7 +37,7 @@ const user = {
   updated_at: '2024-03-05T00:00:00Z',
 }
 
-describe('ProfilePage', () => {
+describe('ProfileClient', () => {
   beforeEach(() => {
     useAuthMock.mockReset().mockReturnValue({ user, refreshUser })
     useUpdateProfile.mockReset().mockReturnValue({ mutateAsync })
@@ -47,7 +47,7 @@ describe('ProfilePage', () => {
   })
 
   it('renders the current user details and member-since in view mode', () => {
-    render(<ProfilePage />)
+    render(<ProfileClient />)
     expect(screen.getByText('member')).toBeInTheDocument()
     expect(screen.getByText('member@example.com')).toBeInTheDocument()
     expect(screen.getByText('Active')).toBeInTheDocument()
@@ -56,7 +56,7 @@ describe('ProfilePage', () => {
 
   it('shows a pre-filled form when Edit is clicked, and Cancel restores view mode', async () => {
     const userEventInstance = userEvent.setup()
-    render(<ProfilePage />)
+    render(<ProfileClient />)
 
     await userEventInstance.click(screen.getByText('Edit'))
     expect(screen.getByLabelText('Username')).toHaveValue('member')
@@ -69,7 +69,7 @@ describe('ProfilePage', () => {
 
   it('submits only the changed fields and omits a blank password', async () => {
     const userEventInstance = userEvent.setup()
-    render(<ProfilePage />)
+    render(<ProfileClient />)
 
     await userEventInstance.click(screen.getByText('Edit'))
     await userEventInstance.clear(screen.getByLabelText('Username'))
@@ -85,7 +85,7 @@ describe('ProfilePage', () => {
 
   it('blocks submission when the new password and confirmation do not match', async () => {
     const userEventInstance = userEvent.setup()
-    render(<ProfilePage />)
+    render(<ProfileClient />)
 
     await userEventInstance.click(screen.getByText('Edit'))
     await userEventInstance.type(screen.getByLabelText('New password'), 'password123')
@@ -99,7 +99,7 @@ describe('ProfilePage', () => {
   it('shows an "already taken" error on 409 and stays in edit mode', async () => {
     mutateAsync.mockRejectedValue(new MockApiError(409, 'conflict'))
     const userEventInstance = userEvent.setup()
-    render(<ProfilePage />)
+    render(<ProfileClient />)
 
     await userEventInstance.click(screen.getByText('Edit'))
     await userEventInstance.clear(screen.getByLabelText('Email'))
