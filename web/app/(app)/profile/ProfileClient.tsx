@@ -106,7 +106,11 @@ export function ProfileClient() {
 
     try {
       await updateProfile.mutateAsync({ id: user!.id, payload })
-      await refreshUser()
+      const refreshed = await refreshUser()
+      if (!refreshed) {
+        setFormError('Profile saved, but could not refresh your details. Please reload.')
+        return
+      }
       showToast('Profile updated')
       setIsEditing(false)
     } catch (err) {
@@ -124,7 +128,7 @@ export function ProfileClient() {
         <ProfileHeader user={user}>
           <Button onClick={startEditing}>Edit</Button>
         </ProfileHeader>
-        <div className="flex flex-col divide-muted-border rounded-2xl border border-muted-border bg-surface md:flex-row">
+        <div className="flex flex-col rounded-2xl border border-muted-border bg-surface md:flex-row">
           <StatTile
             icon={ShieldCheck}
             label="Status"

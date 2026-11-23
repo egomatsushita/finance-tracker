@@ -43,7 +43,7 @@ describe('ProfileClient', () => {
     useUpdateProfile.mockReset().mockReturnValue({ mutateAsync })
     mutateAsync.mockReset().mockResolvedValue({ ...user })
     showToast.mockReset()
-    refreshUser.mockReset().mockResolvedValue(undefined)
+    refreshUser.mockReset().mockResolvedValue(user)
   })
 
   it('renders the current user details and member-since in view mode', () => {
@@ -94,6 +94,21 @@ describe('ProfileClient', () => {
 
     expect(await screen.findByText('Passwords do not match')).toBeInTheDocument()
     expect(mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows a reload message instead of blanking the page when refreshUser fails after save', async () => {
+    refreshUser.mockResolvedValue(null)
+    const userEventInstance = userEvent.setup()
+    render(<ProfileClient />)
+
+    await userEventInstance.click(screen.getByText('Edit'))
+    await userEventInstance.clear(screen.getByLabelText('Username'))
+    await userEventInstance.type(screen.getByLabelText('Username'), 'renamed')
+    await userEventInstance.click(screen.getByText('Save'))
+
+    expect(await screen.findByText(/profile saved, but could not refresh/i)).toBeInTheDocument()
+    expect(showToast).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Username')).toBeInTheDocument()
   })
 
   it('shows an "already taken" error on 409 and stays in edit mode', async () => {

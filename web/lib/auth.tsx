@@ -10,7 +10,7 @@ type AuthContextValue = {
   login: (username: string, password: string) => Promise<void>
   signup: (username: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  refreshUser: () => Promise<void>
+  refreshUser: () => Promise<User | null>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -66,7 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshUser = useCallback(async () => {
-    setUser(await hydrate())
+    const hydratedUser = await hydrate()
+    if (hydratedUser) setUser(hydratedUser)
+    return hydratedUser
   }, [])
 
   return (

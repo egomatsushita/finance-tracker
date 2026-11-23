@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 
 type ToastVariant = 'success' | 'error'
 
@@ -24,12 +24,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const nextId = useRef(0)
 
   const showToast = useCallback((message: string, variant: ToastVariant = 'success') => {
-    const id = nextId.current++
-    setToast({ id, message, variant })
-    setTimeout(() => {
+    setToast({ id: nextId.current++, message, variant })
+  }, [])
+
+  useEffect(() => {
+    if (!toast) return
+    const id = toast.id
+    const timeoutId = setTimeout(() => {
       setToast((current) => (current?.id === id ? null : current))
     }, TOAST_DURATION_MS)
-  }, [])
+    return () => clearTimeout(timeoutId)
+  }, [toast])
 
   return (
     <ToastContext.Provider value={{ showToast }}>
