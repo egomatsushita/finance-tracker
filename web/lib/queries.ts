@@ -1,11 +1,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
 import type {
+  ProfileUpdatePayload,
   Transaction,
   TransactionCreatePayload,
   TransactionListParams,
   TransactionSummary,
   TransactionUpdatePayload,
+  User,
 } from './types'
 
 export function useTransactionSummary() {
@@ -73,5 +75,12 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
+  })
+}
+
+export function useUpdateProfile() {
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ProfileUpdatePayload }) =>
+      api.put<User>(`/users/${id}`, payload),
   })
 }

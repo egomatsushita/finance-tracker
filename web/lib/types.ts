@@ -77,3 +77,9 @@ export type ApiErrorBody = {
 export type LoginResponse = {
   detail: string
 }
+
+export type ProfileUpdatePayload = {
+  username?: string
+  email?: string
+  password?: string
+}
