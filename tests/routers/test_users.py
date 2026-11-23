@@ -89,3 +89,34 @@ async def test_admin_can_read_own_profile_via_me(
 async def test_get_me_unauthenticated(client: AsyncClient):
     response = await client.get("/users/me")
     assert response.status_code == 401
+
+
+async def test_renaming_self_does_not_invalidate_the_session(client: AsyncClient):
+    signup_response = await client.post(
+        "/auth/signup",
+        json={
+            "username": "renamer",
+            "email": "renamer@example.com",
+            "password": "renamerpassword",
+        },
+    )
+    old_session = signup_response.cookies["session"]
+    old_csrf = signup_response.cookies["csrf_token"]
+
+    me_response = await client.get("/users/me", cookies={"session": old_session})
+    user_id = me_response.json()["id"]
+
+    update_response = await client.put(
+        f"/users/{user_id}",
+        json={"username": "renamed"},
+        cookies={"session": old_session, "csrf_token": old_csrf},
+        headers={"X-CSRF-Token": old_csrf},
+    )
+    assert update_response.status_code == 200
+
+    new_session = update_response.cookies["session"]
+    assert new_session != old_session
+
+    me_after_rename = await client.get("/users/me", cookies={"session": new_session})
+    assert me_after_rename.status_code == 200
+    assert me_after_rename.json()["username"] == "renamed"

@@ -1,12 +1,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Response
 
 from dependencies.auth import CurrentUserDep, VerifyCsrf, VerifyOwnership
 from dependencies.service import get_service_dep
 from docs.user import user_endpoints, user_update_self_example
+from routers.auth import set_auth_cookies
 from schemas.user import UserReadSchema, UserUpdateSelfSchema
+from services.auth import AuthService
 from services.user import UserService
 
 ServiceDep = Annotated[UserService, get_service_dep(UserService)]
@@ -57,6 +59,7 @@ async def update_user(
     user_id: UUID,
     data: Annotated[UserUpdateSelfSchema, Body(examples=[user_update_self_example])],
     service: ServiceDep,
+    response: Response,
 ) -> UserReadSchema:
     """
     Update own profile by the given `user_id`.
@@ -66,8 +69,15 @@ async def update_user(
     - **email**: unique email address
     - **password**: plain-text password (will be hashed before storage)
 
+    Reissues the `session` and `csrf_token` cookies on every successful update,
+    since the session's JWT embeds the username in its `sub` claim: without a
+    fresh token, renaming the account would invalidate the caller's own session
+    on the very next request.
+
     Returns the updated user with their id, username, email, active status and
     timestamps.
     """
     user = await service.update(user_id, data)
+    access_token = AuthService.create_access_token(user.username)
+    set_auth_cookies(response, access_token)
     return user

@@ -32,7 +32,7 @@ def _cookie_kwargs() -> dict:
     }
 
 
-def _set_auth_cookies(response: Response, access_token: str) -> None:
+def set_auth_cookies(response: Response, access_token: str) -> None:
     kwargs = _cookie_kwargs()
     response.set_cookie(SESSION_COOKIE, access_token, httponly=True, **kwargs)
     response.set_cookie(
@@ -63,7 +63,7 @@ async def login(
     Sets an httpOnly `session` cookie and a readable `csrf_token` cookie.
     """
     token = await service.login(form_data)
-    _set_auth_cookies(response, token.access_token)
+    set_auth_cookies(response, token.access_token)
     return LoginResponse(detail="ok")
 
 
@@ -82,7 +82,7 @@ async def signup(
     """
     user = await user_service.create(user_data)
     access_token = auth_service.create_access_token(user.username)
-    _set_auth_cookies(response, access_token)
+    set_auth_cookies(response, access_token)
     return LoginResponse(detail="ok")
 
 
