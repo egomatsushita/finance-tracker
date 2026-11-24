@@ -1,0 +1,18 @@
+---
+name: project-user-update-session-reissue
+description: PUT /users/{user_id} reissues session+csrf cookies after update (fixes self-rename logout); introduced a token/cookie expiry mismatch bug and a router-to-router import
+metadata:
+  type: project
+---
+
+Added alongside FT-40 (Profile page): since the session JWT's `sub` claim is the username, renaming your own account via `PUT /users/{user_id}` used to invalidate the caller's own session on the very next request. Fixed by having `app/routers/user.py`'s `update_user` call `AuthService.create_access_token(user.username)` + `set_auth_cookies(response, access_token)` after `service.update(...)`, reissuing both the `session` and `csrf_token` cookies on every successful update. Regression test: `tests/routers/test_users.py::test_renaming_self_does_not_invalidate_the_session` (uses a freshly-signed-up user, not the shared session-scoped fixtures).
+
+Full-branch review on 2026-11-24 found:
+- **Critical, unresolved:** `AuthService.create_access_token(user.username)` is called with no `expires_delta` argument, so `AuthService.calc_expire` (`app/services/auth.py`) falls back to a hardcoded 15-minute JWT `exp`, while `set_auth_cookies`' cookie `max_age` is `settings.access_token_expire_minute * 60` (30 min by default, `app/config/settings.py`). After a profile update, the browser cookie outlives the embedded JWT by 15 minutes, causing a silent mid-session logout. Correct usage (see `AuthService.login`) explicitly passes `timedelta(minutes=settings.access_token_expire_minute)`. **Note:** `routers/auth.py`'s `signup` handler has the exact same bug (`auth_service.create_access_token(user.username)`, no delta) — pre-existing, not introduced by this change, but this fix propagated the same defect into a second call site instead of fixing/centralizing it. Check both call sites if this area is touched again.
+- **Major, unresolved:** `routers/user.py` now does `from routers.auth import set_auth_cookies` — a router importing from another router, which is why `_set_auth_cookies` was renamed public. Blurs the Router→Service→Repository layering and creates latent circular-import risk. Should live in a shared module (e.g. `app/dependencies/auth.py` or a new `app/utils/cookies.py`) instead.
+- **Minor, unresolved:** `user.py` calls `AuthService.create_access_token(...)` directly on the class rather than via the DI pattern used by `routers/auth.py`'s `signup` (`auth_service.create_access_token(...)` through `ServiceDep`). Works because the method is a `@classmethod`, but is inconsistent — likely done to dodge a `ServiceDep` name collision with `user.py`'s own `UserService` dependency alias.
+- **Minor, unresolved:** Cookies/CSRF token are reissued unconditionally on every successful `PUT`, even when only `email`/`password` changed and `username` (the JWT `sub`) didn't — harmless but unnecessary CSRF-token rotation.
+- **Minor, unresolved:** The regression test asserts `session` cookie changed but never asserts `csrf_token` changed, and asserts nothing about token expiry — the expiry-mismatch bug above would not have been caught by this test.
+
+**Why:** First place in the codebase where a non-auth router needs to mint a fresh session token outside of login/signup — exposed both a latent expiry-calculation gap in `AuthService.create_access_token`'s default and a router-layering shortcut.
+**How to apply:** If `app/routers/user.py::update_user`, `app/routers/auth.py::set_auth_cookies`/`signup`, or `AuthService.create_access_token` are touched again, verify the expiry-mismatch bug was fixed (expect an explicit `timedelta(minutes=settings.access_token_expire_minute)` passed at every call site) before treating this as resolved.

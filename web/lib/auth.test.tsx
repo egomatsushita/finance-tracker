@@ -33,7 +33,7 @@ vi.mock('./api', () => ({
 }))
 
 function Probe() {
-  const { user, loading, login, signup, logout } = useAuth()
+  const { user, loading, login, signup, logout, refreshUser } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
   const [signupError, setSignupError] = useState<string | null>(null)
   return (
@@ -61,6 +61,7 @@ function Probe() {
         signup
       </button>
       <button onClick={() => logout()}>logout</button>
+      <button onClick={() => refreshUser()}>refresh</button>
     </div>
   )
 }
@@ -177,5 +178,20 @@ describe('AuthProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('none'))
     expect(logoutRequest).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshUser re-hydrates the user from /users/me', async () => {
+    getWithAuthHandling.mockResolvedValue({ id: '1', username: 'member' })
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('member'))
+
+    getWithAuthHandling.mockResolvedValue({ id: '1', username: 'renamed' })
+    screen.getByText('refresh').click()
+
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('renamed'))
   })
 })
