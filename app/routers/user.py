@@ -2,13 +2,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Response
+from utils.cookies import issue_session
 
 from dependencies.auth import CurrentUserDep, VerifyCsrf, VerifyOwnership
 from dependencies.service import get_service_dep
 from docs.user import user_endpoints, user_update_self_example
-from routers.auth import set_auth_cookies
 from schemas.user import UserReadSchema, UserUpdateSelfSchema
-from services.auth import AuthService
 from services.user import UserService
 
 ServiceDep = Annotated[UserService, get_service_dep(UserService)]
@@ -78,6 +77,5 @@ async def update_user(
     timestamps.
     """
     user = await service.update(user_id, data)
-    access_token = AuthService.create_access_token(user.username)
-    set_auth_cookies(response, access_token)
+    issue_session(response, user.username)
     return user

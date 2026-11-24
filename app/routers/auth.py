@@ -1,10 +1,9 @@
-import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from utils.cookies import clear_auth_cookies, issue_session, set_auth_cookies
 
-from config.settings import settings
 from dependencies.auth import CurrentUserDep, VerifyCsrf
 from dependencies.service import get_service_dep
 from docs.user import user_signup_example
@@ -17,34 +16,6 @@ auth_router = APIRouter(prefix="/auth")
 
 ServiceDep = Annotated[AuthService, get_service_dep(AuthService)]
 UserServiceDep = Annotated[UserService, get_service_dep(UserService)]
-
-SESSION_COOKIE = "session"
-CSRF_COOKIE = "csrf_token"
-
-
-def _cookie_kwargs() -> dict:
-    return {
-        "max_age": settings.access_token_expire_minute * 60,
-        "path": "/",
-        "domain": settings.cookie_domain,
-        "secure": settings.cookie_secure,
-        "samesite": "lax",
-    }
-
-
-def set_auth_cookies(response: Response, access_token: str) -> None:
-    kwargs = _cookie_kwargs()
-    response.set_cookie(SESSION_COOKIE, access_token, httponly=True, **kwargs)
-    response.set_cookie(
-        CSRF_COOKIE, secrets.token_urlsafe(32), httponly=False, **kwargs
-    )
-
-
-def _clear_auth_cookies(response: Response) -> None:
-    for name in (SESSION_COOKIE, CSRF_COOKIE):
-        response.delete_cookie(
-            name, path="/", domain=settings.cookie_domain, samesite="lax"
-        )
 
 
 @auth_router.post("/token", include_in_schema=False)
@@ -72,7 +43,6 @@ async def signup(
     response: Response,
     user_data: Annotated[UserSignupSchema, Body(examples=[user_signup_example])],
     user_service: UserServiceDep,
-    auth_service: ServiceDep,
 ) -> LoginResponse:
     """
     Create a new account with a username, email, and password, then log in.
@@ -81,8 +51,7 @@ async def signup(
     `/auth/token`.
     """
     user = await user_service.create(user_data)
-    access_token = auth_service.create_access_token(user.username)
-    set_auth_cookies(response, access_token)
+    issue_session(response, user.username)
     return LoginResponse(detail="ok")
 
 
@@ -91,5 +60,5 @@ async def logout(response: Response, current_user: CurrentUserDep) -> LoginRespo
     """
     Log out the current session by clearing the `session` and `csrf_token` cookies.
     """
-    _clear_auth_cookies(response)
+    clear_auth_cookies(response)
     return LoginResponse(detail="ok")
