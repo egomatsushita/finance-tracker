@@ -95,13 +95,13 @@ async def test_get_me_unauthenticated(client: AsyncClient):
     assert response.status_code == 401
 
 
-async def test_renaming_self_does_not_invalidate_the_session(client: AsyncClient):
+async def _signup_then_rename(client: AsyncClient, username: str) -> dict:
     signup_response = await client.post(
         "/auth/signup",
         json={
-            "username": "renamer",
-            "email": "renamer@example.com",
-            "password": "renamerpassword",
+            "username": username,
+            "email": f"{username}@example.com",
+            "password": f"{username}password",
         },
     )
     old_session = signup_response.cookies["session"]
@@ -112,26 +112,36 @@ async def test_renaming_self_does_not_invalidate_the_session(client: AsyncClient
 
     update_response = await client.put(
         f"/users/{user_id}",
-        json={"username": "renamed"},
+        json={"username": f"{username}-renamed"},
         cookies={"session": old_session, "csrf_token": old_csrf},
         headers={"X-CSRF-Token": old_csrf},
     )
     assert update_response.status_code == 200
 
-    new_session = update_response.cookies["session"]
-    new_csrf = update_response.cookies["csrf_token"]
-    assert new_session != old_session
-    assert new_csrf != old_csrf
+    return {
+        "old_session": old_session,
+        "old_csrf": old_csrf,
+        "new_session": update_response.cookies["session"],
+        "new_csrf": update_response.cookies["csrf_token"],
+    }
 
-    me_after_rename = await client.get("/users/me", cookies={"session": new_session})
+
+async def test_renaming_self_does_not_invalidate_the_session(client: AsyncClient):
+    tokens = await _signup_then_rename(client, "renamer")
+    assert tokens["new_session"] != tokens["old_session"]
+    assert tokens["new_csrf"] != tokens["old_csrf"]
+
+    me_after_rename = await client.get(
+        "/users/me", cookies={"session": tokens["new_session"]}
+    )
     assert me_after_rename.status_code == 200
-    assert me_after_rename.json()["username"] == "renamed"
+    assert me_after_rename.json()["username"] == "renamer-renamed"
 
-    # Regression guard: the new token's exp must match the cookie's max_age
-    # (settings.access_token_expire_minute), not AuthService's internal
-    # hardcoded default -- otherwise the cookie would outlive the JWT and
-    # the session would die silently before the cookie expires.
-    payload = AuthService.decode_jwt(new_session)
+
+async def test_renamed_session_expiry_matches_cookie_max_age(client: AsyncClient):
+    tokens = await _signup_then_rename(client, "renamer2")
+
+    payload = AuthService.decode_jwt(tokens["new_session"])
     expires_in = datetime.fromtimestamp(payload["exp"], tz=timezone.utc) - datetime.now(
         timezone.utc
     )

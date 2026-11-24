@@ -54,11 +54,6 @@ def issue_session(response: Response, username: str) -> None:
     Args:
         response: The outgoing response to attach cookies to.
         username: The subject to encode in the new JWT.
-
-    Every caller that needs to (re)issue a session -- signup, or updating
-    your own username -- goes through this function instead of calling
-    `AuthService.create_access_token` directly, so the token's `exp` and the
-    cookie's `max_age` can never drift out of sync again.
     """
     expires_delta = timedelta(minutes=settings.access_token_expire_minute)
     access_token = AuthService.create_access_token(username, expires_delta)
