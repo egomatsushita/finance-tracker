@@ -67,3 +67,9 @@ Then use `service: ServiceDep` in handler parameters.
 - Use minimal project dependencies where possible.
 - Use `git switch -c` to create new branches, not `git checkout`.
 - Never raise `HTTPException` in services, repositories, or dependencies. Instead, raise domain exceptions from `app/errors/`. These are mapped to HTTP responses in `app/exception_handlers.py` via `register_exception_handlers()`.
+
+## Agent skills
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root, created lazily by `/domain-modeling` (reached via `/grill-with-docs`). See `docs/agents/domain.md`.
