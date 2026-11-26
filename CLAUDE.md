@@ -70,6 +70,10 @@ Then use `service: ServiceDep` in handler parameters.
 
 ## Agent skills
 
+### Feature workflow
+
+The staged flow for building a feature (grill → spec → plan → implement → review → PR → retro), with gates and conventions, is in `docs/WORKFLOW.md`.
+
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root, created lazily by `/domain-modeling` (reached via `/grill-with-docs`). See `docs/agents/domain.md`.
