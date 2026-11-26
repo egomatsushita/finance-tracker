@@ -23,11 +23,12 @@ describe('SignupPage', () => {
     push.mockReset()
   })
 
-  it('renders username/email/password fields and a submit button', () => {
+  it('renders username/email/password/confirm fields and a submit button', () => {
     render(<SignupPage />)
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign up' })).toBeInTheDocument()
   })
 
@@ -38,7 +39,8 @@ describe('SignupPage', () => {
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Username is required')).toBeInTheDocument()
-    expect(screen.getByText('Password is required')).toBeInTheDocument()
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument()
+    expect(screen.getByText('Please confirm your password')).toBeInTheDocument()
     expect(signup).not.toHaveBeenCalled()
   })
 
@@ -49,13 +51,42 @@ describe('SignupPage', () => {
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'not-an-email')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Enter a valid email address')).toBeInTheDocument()
     expect(signup).not.toHaveBeenCalled()
   })
 
-  it('calls signup and navigates to / on success', async () => {
+  it('shows a validation error for a password shorter than 8 characters', async () => {
+    const user = userEvent.setup()
+    render(<SignupPage />)
+
+    await user.type(screen.getByLabelText('Username'), 'newbie')
+    await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
+    await user.type(screen.getByLabelText('Password'), 'short')
+    await user.type(screen.getByLabelText('Confirm password'), 'short')
+    await user.click(screen.getByRole('button', { name: 'Sign up' }))
+
+    expect(await screen.findByText('Password must be at least 8 characters')).toBeInTheDocument()
+    expect(signup).not.toHaveBeenCalled()
+  })
+
+  it('shows a mismatch error when the passwords differ and does not call signup', async () => {
+    const user = userEvent.setup()
+    render(<SignupPage />)
+
+    await user.type(screen.getByLabelText('Username'), 'newbie')
+    await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
+    await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password999')
+    await user.click(screen.getByRole('button', { name: 'Sign up' }))
+
+    expect(await screen.findByText('Passwords do not match')).toBeInTheDocument()
+    expect(signup).not.toHaveBeenCalled()
+  })
+
+  it('calls signup with only username/email/password and navigates to / on success', async () => {
     signup.mockResolvedValue(undefined)
     const user = userEvent.setup()
     render(<SignupPage />)
@@ -63,6 +94,7 @@ describe('SignupPage', () => {
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/'))
@@ -77,6 +109,7 @@ describe('SignupPage', () => {
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Username or email already taken')).toBeInTheDocument()
@@ -91,6 +124,7 @@ describe('SignupPage', () => {
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
@@ -111,6 +145,7 @@ describe('SignupPage', () => {
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
 
     const submitButton = screen.getByRole('button', { name: 'Sign up' })
     await user.click(submitButton)
