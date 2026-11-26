@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api'
-import LoginPage from './page'
+import { LoginForm } from './LoginForm'
 
 const { login, push } = vi.hoisted(() => ({
   login: vi.fn(),
@@ -17,14 +17,14 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
 }))
 
-describe('LoginPage', () => {
+describe('LoginForm', () => {
   beforeEach(() => {
     login.mockReset()
     push.mockReset()
   })
 
   it('renders username/password fields and a submit button', () => {
-    render(<LoginPage />)
+    render(<LoginForm />)
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
@@ -32,7 +32,7 @@ describe('LoginPage', () => {
 
   it('shows validation errors on empty submit and does not call login', async () => {
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<LoginForm />)
 
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
@@ -44,7 +44,7 @@ describe('LoginPage', () => {
   it('calls login and navigates to / on success', async () => {
     login.mockResolvedValue(undefined)
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<LoginForm />)
 
     await user.type(screen.getByLabelText('Username'), 'member')
     await user.type(screen.getByLabelText('Password'), 'member')
@@ -57,7 +57,7 @@ describe('LoginPage', () => {
   it('shows an inline 401 message on bad credentials and does not navigate', async () => {
     login.mockRejectedValue(new ApiError(401, { detail: 'Incorrect username or password' }))
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<LoginForm />)
 
     await user.type(screen.getByLabelText('Username'), 'member')
     await user.type(screen.getByLabelText('Password'), 'wrong')
@@ -70,7 +70,7 @@ describe('LoginPage', () => {
   it('shows a generic message for non-401 errors', async () => {
     login.mockRejectedValue(new Error('network down'))
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<LoginForm />)
 
     await user.type(screen.getByLabelText('Username'), 'member')
     await user.type(screen.getByLabelText('Password'), 'member')
@@ -89,7 +89,7 @@ describe('LoginPage', () => {
         }),
     )
     const user = userEvent.setup()
-    render(<LoginPage />)
+    render(<LoginForm />)
 
     await user.type(screen.getByLabelText('Username'), 'member')
     await user.type(screen.getByLabelText('Password'), 'member')
@@ -106,7 +106,7 @@ describe('LoginPage', () => {
   })
 
   it('links to the signup page', () => {
-    render(<LoginPage />)
+    render(<LoginForm />)
     expect(screen.getByRole('link', { name: /sign up/i })).toHaveAttribute('href', '/signup')
   })
 })
