@@ -4,15 +4,4 @@ Next.js 16 (App Router) + React 19, Tailwind v4. Tests: Vitest + RTL (`npm test`
 
 ## Conventions
 
-**Client-auth-gated pages must export `instant = false`.** `cacheComponents` is on, so a page gated by a client auth guard (the `(auth)` or `(app)` layout) trips the dev-only instant-navigation insight. Make `page.tsx` a Server Component exporting `instant = false` that renders a `'use client'` body component:
-
-```tsx
-// app/(auth)/signup/page.tsx
-import { SignupForm } from './SignupForm'
-export const instant = false
-export default function SignupPage() {
-  return <SignupForm />
-}
-```
-
-`instant` can't be exported from a `'use client'` module, and on the guard *layout* it doesn't cover child pages — it must be on the page.
+**Pages are Server wrappers over a client body.** Every `page.tsx` under `(app)`/`(auth)` is a Server Component rendering a client `*Client`/`*Form` child; gated pages also `export const instant = false` (keeps `cacheComponents` instant-navigation validation from dropping them). An ESLint rule bans `'use client'` in those page files. Example: `app/(auth)/signup/{page.tsx,SignupForm.tsx}`.

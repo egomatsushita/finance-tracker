@@ -12,6 +12,22 @@ const eslintConfig = defineConfig([
       semi: ['error', 'never'],
     },
   },
+  {
+    // Pages under the (app)/(auth) client-guard layouts must be Server Components
+    // (a `page.tsx` exporting `instant = false` that renders a client *Client/*Form
+    // body), so cacheComponents' instant-navigation validation doesn't drop them.
+    files: ['app/(app)/**/page.tsx', 'app/(auth)/**/page.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExpressionStatement > Literal[value="use client"]',
+          message:
+            'Gated page.tsx must be a Server Component: export `instant = false` and render a client *Client/*Form component (see web/CLAUDE.md).',
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
