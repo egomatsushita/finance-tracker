@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api'
-import SignupPage from './page'
+import { SignupForm } from './SignupForm'
 
 const { signup, push } = vi.hoisted(() => ({
   signup: vi.fn(),
@@ -17,52 +17,84 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
 }))
 
-describe('SignupPage', () => {
+describe('SignupForm', () => {
   beforeEach(() => {
     signup.mockReset()
     push.mockReset()
   })
 
-  it('renders username/email/password fields and a submit button', () => {
-    render(<SignupPage />)
+  it('renders username/email/password/confirm fields and a submit button', () => {
+    render(<SignupForm />)
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign up' })).toBeInTheDocument()
   })
 
   it('shows validation errors on empty submit and does not call signup', async () => {
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
 
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Username is required')).toBeInTheDocument()
-    expect(screen.getByText('Password is required')).toBeInTheDocument()
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument()
+    expect(screen.getByText('Please confirm your password')).toBeInTheDocument()
     expect(signup).not.toHaveBeenCalled()
   })
 
   it('shows a validation error for an invalid email', async () => {
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
 
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'not-an-email')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Enter a valid email address')).toBeInTheDocument()
     expect(signup).not.toHaveBeenCalled()
   })
 
-  it('calls signup and navigates to / on success', async () => {
-    signup.mockResolvedValue(undefined)
+  it('shows a validation error for a password shorter than 8 characters', async () => {
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
+
+    await user.type(screen.getByLabelText('Username'), 'newbie')
+    await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
+    await user.type(screen.getByLabelText('Password'), 'short')
+    await user.type(screen.getByLabelText('Confirm password'), 'short')
+    await user.click(screen.getByRole('button', { name: 'Sign up' }))
+
+    expect(await screen.findByText('Password must be at least 8 characters')).toBeInTheDocument()
+    expect(signup).not.toHaveBeenCalled()
+  })
+
+  it('shows a mismatch error when the passwords differ and does not call signup', async () => {
+    const user = userEvent.setup()
+    render(<SignupForm />)
 
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password999')
+    await user.click(screen.getByRole('button', { name: 'Sign up' }))
+
+    expect(await screen.findByText('Passwords do not match')).toBeInTheDocument()
+    expect(signup).not.toHaveBeenCalled()
+  })
+
+  it('calls signup with only username/email/password and navigates to / on success', async () => {
+    signup.mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    render(<SignupForm />)
+
+    await user.type(screen.getByLabelText('Username'), 'newbie')
+    await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
+    await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/'))
@@ -72,11 +104,12 @@ describe('SignupPage', () => {
   it('shows an inline conflict message when the username/email is taken and does not navigate', async () => {
     signup.mockRejectedValue(new ApiError(409, { detail: 'Username or email already taken' }))
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
 
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Username or email already taken')).toBeInTheDocument()
@@ -86,11 +119,12 @@ describe('SignupPage', () => {
   it('shows a generic message for non-409 errors', async () => {
     signup.mockRejectedValue(new Error('network down'))
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
 
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
     await user.click(screen.getByRole('button', { name: 'Sign up' }))
 
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
@@ -106,11 +140,12 @@ describe('SignupPage', () => {
         }),
     )
     const user = userEvent.setup()
-    render(<SignupPage />)
+    render(<SignupForm />)
 
     await user.type(screen.getByLabelText('Username'), 'newbie')
     await user.type(screen.getByLabelText('Email'), 'newbie@example.com')
     await user.type(screen.getByLabelText('Password'), 'password123')
+    await user.type(screen.getByLabelText('Confirm password'), 'password123')
 
     const submitButton = screen.getByRole('button', { name: 'Sign up' })
     await user.click(submitButton)
@@ -124,7 +159,7 @@ describe('SignupPage', () => {
   })
 
   it('links back to the login page', () => {
-    render(<SignupPage />)
+    render(<SignupForm />)
     expect(screen.getByRole('link', { name: /log in/i })).toHaveAttribute('href', '/login')
   })
 })

@@ -12,15 +12,21 @@ import { Input } from '@/components/ui/Input'
 import { ApiError } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
-const signupSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-})
+const signupSchema = z
+  .object({
+    username: z.string().min(1, 'Username is required'),
+    email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
 
 type SignupFormValues = z.infer<typeof signupSchema>
 
-export default function SignupPage() {
+export function SignupForm() {
   const router = useRouter()
   const { signup } = useAuth()
   const [formError, setFormError] = useState<string | null>(null)
@@ -72,6 +78,13 @@ export default function SignupPage() {
               autoComplete="new-password"
               error={errors.password?.message}
               {...register('password')}
+            />
+            <Input
+              label="Confirm password"
+              type="password"
+              autoComplete="new-password"
+              error={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
             />
             {formError && (
               <p role="alert" className="text-sm text-expense">
