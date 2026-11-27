@@ -32,7 +32,7 @@ Switch to a new branch using `branch_name`. If already taken, append a version n
 
 ## Step 4. Draft the spec
 
-Read `_specs/template.md` and follow its structure exactly. Save to `_specs/<feature_slug>.md`. Do not add code examples.
+Read `docs/features/template.md` and follow its structure exactly. Save to `docs/features/<feature_slug>/spec.md`. Do not add code examples.
 
 ## Step 5. Final output
 
@@ -40,7 +40,7 @@ Respond with exactly:
 
 ```
 Branch: <branch_name>
-Spec: _specs/<feature_slug>.md
+Spec: docs/features/<feature_slug>/spec.md
 Title: <feature_title>
 ```
 

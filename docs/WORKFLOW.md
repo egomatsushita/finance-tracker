@@ -16,10 +16,10 @@ grill-with-docs → spec → plan → implement → code-review → PR → retro
    **Gate:** shared understanding confirmed.
 
 2. **spec** — `/spec <title> ticket: <id>` *(project skill)*. Writes
-   `_specs/<slug>.md` (summary, requirements, edge cases, acceptance criteria) and
-   creates the feature branch. **Gate:** spec reviewed.
+   `docs/features/<slug>/spec.md` (summary, requirements, edge cases, acceptance
+   criteria) and creates the feature branch. **Gate:** spec reviewed.
 
-3. **plan** — write `_plans/<slug>.md`: a second design pass that turns the spec into
+3. **plan** — write `docs/features/<slug>/plan.md`: a second design pass that turns the spec into
    concrete file changes, a commit breakdown, and a verification plan. Treat it as
    design, not transcription — this is where a better approach than the spec's
    assumption often surfaces. **Gate:** plan approved before implementing.
@@ -40,7 +40,7 @@ grill-with-docs → spec → plan → implement → code-review → PR → retro
 ## Conventions
 
 - Create the branch **before** writing spec/plan files.
-- Commit `_specs/<slug>.md` and `_plans/<slug>.md` together as one docs commit.
+- Commit `docs/features/<slug>/spec.md` and `docs/features/<slug>/plan.md` together as one docs commit.
 - **Check for prior art** right after grilling: scan sibling modules / route groups
   for an existing pattern before investigating or inventing one.
 - **Verify the fix kills the observed symptom** before declaring success — a passing
