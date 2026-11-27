@@ -98,7 +98,7 @@ Five slash commands are integrated into the development workflow as Claude Code 
 
 Creates a feature spec file and a new Git branch from a short feature description.
 
-Parses the input to extract a feature title, kebab-case slug, and ticket ID (`FT-n`), then switches to a new branch (`FT-n_feature-slug`) and drafts a spec file in `_specs/` following the project template. Aborts if there are uncommitted changes to keep the working tree clean.
+Parses the input to extract a feature title, kebab-case slug, and ticket ID (`FT-n`), then switches to a new branch (`FT-n_feature-slug`) and drafts a spec file in `docs/features/<slug>/` following the project template. Aborts if there are uncommitted changes to keep the working tree clean.
 
 **Usage:** `/spec <short feature description>, ticket: FT-n`
 
