@@ -9,6 +9,15 @@ export function formatCategoryLabel(category: string): string {
   return category.charAt(0).toUpperCase() + category.slice(1)
 }
 
+export function formatMonthLabel(month: string): string {
+  const [year, m] = month.split('-').map(Number)
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, m - 1, 1)))
+}
+
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
