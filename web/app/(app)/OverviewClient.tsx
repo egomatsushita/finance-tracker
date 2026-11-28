@@ -6,13 +6,10 @@ import { IncomeExpenseTrendChart } from '@/components/charts/IncomeExpenseTrendC
 import { Card } from '@/components/ui/Card'
 import { OverviewSkeleton } from '@/components/ui/Skeleton'
 import { getCategoryIcon } from '@/lib/categoryIcons'
-import { formatCategoryLabel, formatMoney } from '@/lib/format'
+import { formatCategoryLabel, formatMonthLabel, formatMoney } from '@/lib/format'
 import { useRecentTransactions, useTransactionSummary } from '@/lib/queries'
 
-function monthDelta(series: number[]): number | null {
-  if (series.length < 2) return null
-  const prev = series[series.length - 2]
-  const curr = series[series.length - 1]
+function pctDelta(curr: number, prev: number): number | null {
   if (prev === 0) return null
   return ((curr - prev) / Math.abs(prev)) * 100
 }
@@ -22,14 +19,16 @@ function KpiTile({
   label,
   value,
   tone,
-  series,
+  delta,
+  deltaLabel,
   first,
 }: {
   icon: typeof Wallet
   label: string
   value: string
   tone: 'highlight' | 'income' | 'expense'
-  series: number[]
+  delta: number | null
+  deltaLabel: string | null
   first?: boolean
 }) {
   const toneClasses = {
@@ -42,7 +41,6 @@ function KpiTile({
     income: 'text-income',
     expense: 'text-expense',
   }[tone]
-  const delta = monthDelta(series)
 
   return (
     <div
@@ -54,10 +52,10 @@ function KpiTile({
       <div className="min-w-0">
         <p className="text-sm text-muted-text">{label}</p>
         <p className={`truncate font-mono text-2xl font-semibold ${valueClasses}`}>{value}</p>
-        {delta !== null && (
+        {delta !== null && deltaLabel && (
           <p className="text-xs text-muted-text">
             {delta >= 0 ? '+' : ''}
-            {delta.toFixed(1)}% vs last month
+            {delta.toFixed(1)}% {deltaLabel}
           </p>
         )}
       </div>
@@ -83,28 +81,60 @@ export function OverviewClient() {
 
   const hasTransactions = recent.data.length > 0 || summary.data.by_month.length > 0
 
-  const incomeSeries = summary.data.by_month.map((m) => Number(m.income))
-  const expenseSeries = summary.data.by_month.map((m) => Number(m.expense))
-  const netSeries = summary.data.by_month.map((m) => Number(m.income) - Number(m.expense))
+  // The KPI tiles describe the most recent month with activity, compared to the
+  // previous month that had activity. by_month has no gap-fill, so that previous
+  // month may be several calendar months back — the delta names it explicitly
+  // rather than claiming "last month".
+  const months = summary.data.by_month
+  const current = months.at(-1)
+  const previous = months.at(-2)
+
+  const incomeCurr = current ? Number(current.income) : 0
+  const expenseCurr = current ? Number(current.expense) : 0
+  const netCurr = incomeCurr - expenseCurr
+
+  const deltaLabel = previous ? `vs ${formatMonthLabel(previous.month)}` : null
+  const incomeDelta = previous ? pctDelta(incomeCurr, Number(previous.income)) : null
+  const expenseDelta = previous ? pctDelta(expenseCurr, Number(previous.expense)) : null
+  const netDelta = previous
+    ? pctDelta(netCurr, Number(previous.income) - Number(previous.expense))
+    : null
 
   return (
     <main className="flex flex-1 flex-col gap-6 p-6">
-      <div className="flex flex-col divide-muted-border rounded-2xl border border-muted-border bg-surface md:flex-row">
-        <KpiTile icon={Wallet} label="Net" value={formatMoney(summary.data.net)} tone="highlight" series={netSeries} first />
-        <KpiTile
-          icon={TrendingUp}
-          label="Income"
-          value={formatMoney(summary.data.total_income)}
-          tone="income"
-          series={incomeSeries}
-        />
-        <KpiTile
-          icon={TrendingDown}
-          label="Expense"
-          value={formatMoney(summary.data.total_expense)}
-          tone="expense"
-          series={expenseSeries}
-        />
+      <div>
+        {current && (
+          <p className="mb-2 text-xs font-medium tracking-wide text-muted-text uppercase">
+            {formatMonthLabel(current.month)}
+          </p>
+        )}
+        <div className="flex flex-col divide-muted-border rounded-2xl border border-muted-border bg-surface md:flex-row">
+          <KpiTile
+            icon={Wallet}
+            label="Net"
+            value={formatMoney(String(netCurr))}
+            tone="highlight"
+            delta={netDelta}
+            deltaLabel={deltaLabel}
+            first
+          />
+          <KpiTile
+            icon={TrendingUp}
+            label="Income"
+            value={formatMoney(current ? current.income : '0.00')}
+            tone="income"
+            delta={incomeDelta}
+            deltaLabel={deltaLabel}
+          />
+          <KpiTile
+            icon={TrendingDown}
+            label="Expense"
+            value={formatMoney(current ? current.expense : '0.00')}
+            tone="expense"
+            delta={expenseDelta}
+            deltaLabel={deltaLabel}
+          />
+        </div>
       </div>
 
       {!hasTransactions ? (
