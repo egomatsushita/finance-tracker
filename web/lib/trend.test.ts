@@ -43,6 +43,16 @@ describe('fillMonthGaps', () => {
     expect(fillMonthGaps(input)).toEqual(input)
   })
 
+  it('sorts input defensively before filling', () => {
+    const result = fillMonthGaps([
+      { month: '2026-11', income: '1200.00', expense: '100.00' },
+      { month: '2026-09', income: '5.00', expense: '2.00' },
+    ])
+
+    expect(result.map((m) => m.month)).toEqual(['2026-09', '2026-10', '2026-11'])
+    expect(result[0]).toEqual({ month: '2026-09', income: '5.00', expense: '2.00' })
+  })
+
   it('returns a single month or empty input unchanged', () => {
     expect(fillMonthGaps([])).toEqual([])
     const one = [{ month: '2026-05', income: '1.00', expense: '1.00' }]

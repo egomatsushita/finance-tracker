@@ -5,13 +5,15 @@ type MonthPoint = TransactionSummary['by_month'][number]
 // by_month only contains months that have transactions, so a chart plotting it
 // directly draws non-adjacent months with equal spacing — hiding gaps. Fill the
 // range between the first and last month with zero-valued months so the x-axis
-// reflects the real timeline. Assumes the input is sorted ascending by month.
+// reflects the real timeline. Input is sorted defensively, so callers need not
+// pre-sort ("YYYY-MM" sorts lexicographically == chronologically).
 export function fillMonthGaps(months: MonthPoint[]): MonthPoint[] {
   if (months.length <= 1) return months
 
-  const byKey = new Map(months.map((m) => [m.month, m]))
-  const [startYear, startMonth] = months[0].month.split('-').map(Number)
-  const [endYear, endMonth] = months[months.length - 1].month.split('-').map(Number)
+  const sorted = [...months].sort((a, b) => a.month.localeCompare(b.month))
+  const byKey = new Map(sorted.map((m) => [m.month, m]))
+  const [startYear, startMonth] = sorted[0].month.split('-').map(Number)
+  const [endYear, endMonth] = sorted[sorted.length - 1].month.split('-').map(Number)
 
   const result: MonthPoint[] = []
   let year = startYear
