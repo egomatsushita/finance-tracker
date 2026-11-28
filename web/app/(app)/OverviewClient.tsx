@@ -6,8 +6,9 @@ import { IncomeExpenseTrendChart } from '@/components/charts/IncomeExpenseTrendC
 import { Card } from '@/components/ui/Card'
 import { OverviewSkeleton } from '@/components/ui/Skeleton'
 import { getCategoryIcon } from '@/lib/categoryIcons'
-import { formatCategoryLabel, formatMonthLabel, formatMoney } from '@/lib/format'
+import { formatCategoryLabel, formatDate, formatMonthLabel, formatMoney } from '@/lib/format'
 import { useRecentTransactions, useTransactionSummary } from '@/lib/queries'
+import { fillMonthGaps } from '@/lib/trend'
 
 function pctDelta(curr: number, prev: number): number | null {
   if (prev === 0) return null
@@ -147,13 +148,16 @@ export function OverviewClient() {
         <>
           <Card>
             <h2 className="mb-4 text-sm font-medium text-muted-text">Income vs. expense</h2>
-            <IncomeExpenseTrendChart data={summary.data.by_month} />
+            <IncomeExpenseTrendChart data={fillMonthGaps(summary.data.by_month)} />
           </Card>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card elevated={false}>
               <div className="mb-2 flex items-baseline justify-between gap-2">
-                <h2 className="text-sm font-medium text-muted-text">Expenses by category</h2>
+                <h2 className="text-sm font-medium text-muted-text">
+                  Expenses by category
+                  <span className="ml-2 text-xs font-normal text-muted-text">All time</span>
+                </h2>
                 <p className="font-mono text-sm font-semibold text-ink">
                   {formatMoney(summary.data.total_expense)}
                 </p>
@@ -175,8 +179,13 @@ export function OverviewClient() {
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted-border/60 text-ink">
                             <Icon size={16} aria-hidden="true" />
                           </span>
-                          <span className="truncate text-sm text-ink">
-                            {formatCategoryLabel(t.category)}
+                          <span className="flex min-w-0 flex-col">
+                            <span className="truncate text-sm text-ink">
+                              {formatCategoryLabel(t.category)}
+                            </span>
+                            <span className="text-xs text-muted-text">
+                              {formatDate(t.transaction_date)}
+                            </span>
                           </span>
                         </div>
                         <span

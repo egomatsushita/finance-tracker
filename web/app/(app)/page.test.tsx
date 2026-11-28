@@ -84,6 +84,12 @@ describe('Overview page', () => {
     expect(screen.getByTestId('category-chart')).toBeInTheDocument()
     expect(screen.getByText('Recent transactions')).toBeInTheDocument()
     expect(screen.getAllByText(/Groceries|Salary/)).toHaveLength(2)
+    // The category breakdown is all-time; label it so it doesn't look like it
+    // should match the current-month KPI tiles.
+    expect(screen.getByText('All time')).toBeInTheDocument()
+    // Each recent transaction shows its date.
+    expect(screen.getByText('Jan 10, 2026')).toBeInTheDocument()
+    expect(screen.getByText('Jan 1, 2026')).toBeInTheDocument()
   })
 
   it('shows empty states when there are no transactions', () => {

@@ -96,7 +96,7 @@ export function CategoryBarChart({ data }: { data: TransactionSummary['by_catego
           tickFormatter={(value) => formatCategoryLabel(String(value))}
           stroke="var(--muted-text)"
           tick={{ fill: 'var(--ink)' }}
-          width={100}
+          width={120}
           axisLine={false}
           tickLine={false}
           interval={0}

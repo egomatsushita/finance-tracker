@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import type { Props as RechartsLabelProps } from 'recharts/types/component/Label'
 import type { TooltipContentProps } from 'recharts/types/component/Tooltip'
-import { formatMoney } from '@/lib/format'
+import { formatMonthLabel, formatMonthShort, formatMoney } from '@/lib/format'
 import type { TransactionSummary } from '@/lib/types'
 
 // Bar-top value labels can land right on a Y-axis gridline depending on the
@@ -44,7 +44,7 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload || payload.length === 0) return null
   return (
     <div className="rounded-xl bg-[#111827] px-3 py-2 text-sm text-white shadow-xl">
-      <p className="mb-1 font-medium">{String(label)}</p>
+      <p className="mb-1 font-medium">{formatMonthLabel(String(label))}</p>
       {payload.map((entry) => {
         const value = Array.isArray(entry.value) ? entry.value[0] : entry.value
         return (
@@ -102,6 +102,7 @@ export function IncomeExpenseTrendChart({ data }: { data: TransactionSummary['by
           dataKey="month"
           stroke="var(--muted-text)"
           tick={{ fill: 'var(--muted-text)' }}
+          tickFormatter={formatMonthShort}
           interval={0}
         />
         <YAxis stroke="var(--muted-text)" tick={{ fill: 'var(--muted-text)' }} />
