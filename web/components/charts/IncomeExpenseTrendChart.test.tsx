@@ -16,7 +16,7 @@ describe('IncomeExpenseTrendChart', () => {
     expect(screen.getByText('Expense')).toBeInTheDocument()
   })
 
-  it('renders a label for each month', () => {
+  it('renders a short month label for each month', () => {
     const { container } = render(
       <IncomeExpenseTrendChart
         data={[
@@ -28,8 +28,8 @@ describe('IncomeExpenseTrendChart', () => {
     // Scoped to the rendered container — recharts appends a hidden
     // #recharts_measurement_span to document.body for text-width
     // measurement, which can otherwise collide with screen.getByText.
-    expect(within(container).getByText('2026-01')).toBeInTheDocument()
-    expect(within(container).getByText('2026-02')).toBeInTheDocument()
+    expect(within(container).getByText('Jan')).toBeInTheDocument()
+    expect(within(container).getByText('Feb')).toBeInTheDocument()
   })
 
   it('shows an empty state when there is no data', () => {

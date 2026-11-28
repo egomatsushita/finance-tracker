@@ -76,14 +76,20 @@ describe('Overview page', () => {
     render(<Home />)
 
     expect(screen.getByText('Net')).toBeInTheDocument()
-    expect(screen.getByText('900.00')).toBeInTheDocument()
-    expect(screen.getByText('1,500.00')).toBeInTheDocument()
-    expect(screen.getByText('+1,234.00')).toBeInTheDocument()
-    expect(screen.getAllByText('600.00')).toHaveLength(2)
+    expect(screen.getByText('$900.00')).toBeInTheDocument()
+    expect(screen.getByText('$1,500.00')).toBeInTheDocument()
+    expect(screen.getByText('+$1,234.00')).toBeInTheDocument()
+    expect(screen.getAllByText('$600.00')).toHaveLength(2)
     expect(screen.getByTestId('trend-chart')).toBeInTheDocument()
     expect(screen.getByTestId('category-chart')).toBeInTheDocument()
     expect(screen.getByText('Recent transactions')).toBeInTheDocument()
     expect(screen.getAllByText(/Groceries|Salary/)).toHaveLength(2)
+    // The category breakdown is all-time; label it so it doesn't look like it
+    // should match the current-month KPI tiles.
+    expect(screen.getByText('All time')).toBeInTheDocument()
+    // Each recent transaction shows its date.
+    expect(screen.getByText('Jan 10, 2026')).toBeInTheDocument()
+    expect(screen.getByText('Jan 1, 2026')).toBeInTheDocument()
   })
 
   it('shows empty states when there are no transactions', () => {

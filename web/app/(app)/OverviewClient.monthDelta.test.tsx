@@ -70,9 +70,9 @@ describe('OverviewClient — KPI current month vs previous active month', () => 
 
     // Net headline is November's net (1,200 − 100 = 1,100), not the all-time
     // net of 4,110.
-    expect(screen.getByText('1,100.00')).toBeInTheDocument()
+    expect(screen.getByText('$1,100.00')).toBeInTheDocument()
     // The all-time income total must not appear in the KPI tiles.
-    expect(screen.queryByText('10,950.00')).not.toBeInTheDocument()
+    expect(screen.queryByText('$10,950.00')).not.toBeInTheDocument()
     // The period being summarized is labelled.
     expect(screen.getByText('Nov 2026')).toBeInTheDocument()
   })
